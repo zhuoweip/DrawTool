@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.IO;
 
 public static class Extension
 {
@@ -21,6 +22,30 @@ public static class Extension
 
 public class ToolEditor : EditorWindow
 {
+    private bool groupEnabled;
+    private bool Pencil = false;
+    private bool Erase = false;
+    private bool Crayon = false;
+    private bool Gradient = false;
+    private bool Paint = false;
+    private bool Spark = false;
+    private bool Stamp = false;
+    private bool PaintCollider = false;
+    private bool Size = false;
+    private bool Recovery = false;
+    private bool Zoom = false;
+    private bool Delete = false;
+    private bool TakePhoto = false;
+    private bool LeaveMsg = false;
+    private bool ReviewMsg = false;
+    private bool Color = false;
+    private bool ColorAtla = false;
+    private bool Alpha = false;
+
+    private bool DeleteAllTool = false;
+
+    public static Transform parent;
+
     [MenuItem("DrawTool/ChooseTool")]
     static void Init()
     {
@@ -30,6 +55,8 @@ public class ToolEditor : EditorWindow
 
     static void GetParent()
     {
+        prefabPath = string.Empty;
+
         //GameObject[] objs = (GameObject[])Resources.FindObjectsOfTypeAll(typeof(GameObject));
 
         Scene scene = SceneManager.GetActiveScene();
@@ -57,37 +84,12 @@ public class ToolEditor : EditorWindow
             {
                 parent = child.transform;
                 Selection.activeGameObject = parent.gameObject;
-                Debug.LogError(parent.name);
                 return;
             }
             else
                 FindChild(child.gameObject);
         }
     }
-
-    private bool groupEnabled;
-    private bool Pencil = false;
-    private bool Erase = false;
-    private bool Crayon = false;
-    private bool Gradient = false;
-    private bool Paint = false;
-    private bool Spark = false;
-    private bool Stamp = false;
-    private bool PaintCollider = false;
-    private bool Size = false;
-    private bool Recovery = false;
-    private bool Zoom = false;
-    private bool Delete = false;
-    private bool TakePhoto = false;
-    private bool LeaveMsg = false;
-    private bool ReviewMsg = false;
-    private bool Color = false;
-    private bool ColorAtla = false;
-    private bool Alpha = false;
-
-    private bool DeleteAllTool = false;
-
-    public static Transform parent;
 
     private void OnGUI()
     {
@@ -216,17 +218,57 @@ public class ToolEditor : EditorWindow
         {
             isChooseTool = !isChooseTool;
 
-            //注意Project里面路径的更改，这边也要相应更改
-            GameObject toolPrefab = AssetDatabase.LoadAssetAtPath("Assets/DrawTool/Prefab/Tool/" + toolName + ".prefab", typeof(GameObject)) as GameObject;
-            GameObject tool = PrefabUtility.InstantiatePrefab(toolPrefab) as GameObject;
-
-            tempTool = tool;
-            SetPrefabData(tool);
+            GetPrefabPath();
+            if (!string.IsNullOrEmpty(prefabPath))
+            {
+                GameObject toolPrefab = AssetDatabase.LoadAssetAtPath(prefabPath + "/" + toolName + ".prefab", typeof(GameObject)) as GameObject;
+                GameObject tool = PrefabUtility.InstantiatePrefab(toolPrefab) as GameObject;
+                tempTool = tool;
+                SetPrefabData(tool);
+            }
+            else
+            {
+                Debug.LogError("Prefab Path Could Not Be Finded");
+                return;
+            }
         }
         else if (!toggle && isChooseTool)
         {
             isChooseTool = !isChooseTool;
             DestroyImmediate(tempTool);
+        }
+    }
+
+    static string prefabPath;
+
+    static void GetPrefabPath()
+    {
+        DirectoryInfo dir = new DirectoryInfo(Application.dataPath);
+        GetAllFiles(dir);
+    }
+
+    static void GetAllFiles(DirectoryInfo dir)
+    {
+        FileSystemInfo[] fileinfo = dir.GetFileSystemInfos();
+        foreach(FileSystemInfo i in fileinfo)
+        {
+            if (i is DirectoryInfo)
+            {
+                string[] strArrary = i.FullName.Split('\\');
+                if (strArrary[strArrary.Length - 1] == "Tool")
+                {
+                    string fullName = i.FullName;
+                    int index = fullName.IndexOf("Assets");
+                    string path = fullName.Substring(index, fullName.Length - index).Replace("\\", "/");
+                    prefabPath = path;
+                    return;
+                }
+                else
+                {
+                    GetAllFiles((DirectoryInfo)i);
+                }
+            }
+            else{}
         }
     }
 

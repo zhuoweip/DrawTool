@@ -5,8 +5,16 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum LoadType
+{
+    WWW,
+    IO
+}
+
 public class GetCamera : MonoBehaviour
 {
+    public LoadType loadType = LoadType.IO;
+
     public Camera mCamera;                            
     public GameObject reviewMsgUI;                      //留言回顾UI
     public Transform startPoint;
@@ -74,7 +82,10 @@ public class GetCamera : MonoBehaviour
 
     void InitData()
     {
-        StartCoroutine(LoadWWWAllPicture());
+        if (loadType == LoadType.IO)
+            LoadAllPicture();
+        else
+            StartCoroutine(LoadWWWAllPicture());
         // 设备不同的坐标转换
 #if UNITY_IOS || UNITY_IPHONE
         img.transform.Rotate (new Vector3 (0, 180, 90));
@@ -103,7 +114,7 @@ public class GetCamera : MonoBehaviour
             WebCamDevice[] cameraDevices = WebCamTexture.devices;
             string deviceName = cameraDevices[0].name;
 
-            camTexture = new WebCamTexture(deviceName, Screen.height, Screen.width, 60);
+            camTexture = new WebCamTexture(deviceName, Screen.width, Screen.height, 60);
             cameraImage.texture = camTexture;
 
             camTexture.Play();
@@ -183,8 +194,11 @@ public class GetCamera : MonoBehaviour
         File.WriteAllBytes(filename, imagebytes);
 
 
+        if (loadType == LoadType.IO)
+            LoadAllPicture();
+        else
+            StartCoroutine(LoadWWWAllPicture());
 
-        StartCoroutine(LoadWWWAllPicture());
         qr.UpLoad(imagebytes, timestamp);
 
         //GameObject vc = GameObject.Find("VectorCanvas");
@@ -196,15 +210,21 @@ public class GetCamera : MonoBehaviour
         //}
     }
 
+
+
     List<Texture2D> allTex2d = new List<Texture2D>();
     Hashtable ht = new Hashtable();
+
+    /// <summary>
+    /// WWW加载
+    /// </summary>
+    /// <returns></returns>
     public IEnumerator LoadWWWAllPicture()
     {
         allTex2d.Clear();
         string streamingPath = Application.streamingAssetsPath;
         DirectoryInfo dir = new DirectoryInfo(streamingPath + "/Imags/");//初始化一个DirectoryInfo类的对象
         GetAllFiles(dir);
-        double startTime = (double)Time.time;
         foreach (DictionaryEntry de in ht)
         {
             WWW www = new WWW("file://" + streamingPath + "/" + de.Key);
@@ -218,7 +238,37 @@ public class GetCamera : MonoBehaviour
             if (www.isDone)
             {
                 www.Dispose();
+                Resources.UnloadUnusedAssets();
             }
+        }
+    }
+
+    /// <summary>
+    /// IO加载
+    /// </summary>
+    public void LoadAllPicture()
+    {
+        allTex2d.Clear();
+        string streamingPath = Application.streamingAssetsPath;
+        DirectoryInfo dir = new DirectoryInfo(streamingPath + "/Imags/");//初始化一个DirectoryInfo类的对象
+        GetAllFiles(dir);
+        foreach (DictionaryEntry de in ht)
+        {
+            FileStream fileStream = new FileStream(streamingPath + "/" + de.Key, FileMode.Open, FileAccess.Read);
+            fileStream.Seek(0, SeekOrigin.Begin);
+            byte[] bytes = new byte[fileStream.Length];
+            fileStream.Read(bytes, 0, (int)fileStream.Length);
+            System.Drawing.Image image = System.Drawing.Image.FromStream(fileStream);
+            fileStream.Close();
+            fileStream.Dispose();
+            fileStream = null;
+
+            int width = image.Width;
+            int height = image.Height;
+            Texture2D tmp = new Texture2D(width,height);
+            tmp.LoadImage(bytes);
+            tmp.name = de.Key.ToString();
+            allTex2d.Add(tmp);
         }
     }
 
@@ -433,7 +483,10 @@ public class GetCamera : MonoBehaviour
 
         if (allTex2d.Count == 0)
         {
-            StartCoroutine(LoadWWWAllPicture());
+            if (loadType == LoadType.IO)
+                LoadAllPicture();
+            else
+                StartCoroutine(LoadWWWAllPicture());
             if (allTex2d.Count == 0)
                 return;
         }
