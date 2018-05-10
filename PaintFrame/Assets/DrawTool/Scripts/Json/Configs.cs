@@ -94,7 +94,7 @@ public class Configs : MonoSingleton<Configs> {
    public string LoadText(string name,string info)
    {
        string str = (string)jsonData[name][info];
-       Debug.Log(str);
+       //Debug.Log(str);
        return str;
    }
 

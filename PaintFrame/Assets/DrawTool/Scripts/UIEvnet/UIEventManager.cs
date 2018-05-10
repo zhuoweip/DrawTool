@@ -130,6 +130,7 @@ public static class UIEventManager
     /// </summary>
     public static void LeaveMsg()
     {
+        //GameObject.FindObjectOfType<DrawManager>().ShowCursor(false);
         GameObject.FindObjectOfType<GetCamera>().Save();
     }
 
@@ -138,6 +139,7 @@ public static class UIEventManager
     /// </summary>
     public static void ReviewMsg()
     {
+        //GameObject.FindObjectOfType<DrawManager>().ShowCursor(false);
         GameObject.FindObjectOfType<GetCamera>().ImgGet();
     }
 

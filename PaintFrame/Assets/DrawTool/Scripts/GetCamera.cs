@@ -16,7 +16,8 @@ public class GetCamera : MonoBehaviour
     public LoadType loadType = LoadType.IO;
 
     public Camera mCamera;                            
-    public GameObject reviewMsgUI;                      //留言回顾UI
+    public GameObject reviewMsgUI;                    //留言回顾UI
+    public Button returnBtn;                          //留言回顾关闭按钮
     public Transform startPoint;
     public Transform endPoint;
     public RawImage cameraImage;                      //获取摄像机投影
@@ -25,27 +26,19 @@ public class GetCamera : MonoBehaviour
     public GameObject photo;                          //截取拍摄照片
     WebCamTexture camTexture;
     public QR_Code qr;
+    public PicturePool picPool;
+    private DrawManager drawManager;
 
     int w, h;
     Vector3 v1, v2;
     bool Isget = false;
     public int suncount = 0;
 
-    //控制翻页笔
-    bool patBool = false;
-    bool up;
-    bool down;
-
-    private void OnEnable()
-    {
-        up = true;
-        down = false;
-    }
 
     private bool isOpenCameraDevice;
     private void Awake()
     {
-        //patBool = bool.Parse(LoadXml.ReadXml("Within", "patBool"));
+        drawManager = GameObject.FindObjectOfType<DrawManager>();
         isOpenCameraDevice = bool.Parse(Configs.Instance.LoadText("开启摄像头", "false/true"));
     }
 
@@ -57,26 +50,28 @@ public class GetCamera : MonoBehaviour
 
     public void Update()
     {
-        if (patBool)
+        if (!drawManager.isForbid && reviewMsgUI.activeInHierarchy)
         {
-            return;
+            drawManager.isForbid = true;
         }
 
-        if (Input.GetKeyDown(KeyCode.PageUp) && up)
+        if (Input.GetKeyDown(KeyCode.PageUp))
         {
-            up = false;
-            down = true;
             TakePhoto();
-            Debug.Log("Up");
         }
 
-        if (Input.GetKeyDown(KeyCode.PageDown) && down)
+        if (Input.GetKeyDown(KeyCode.PageDown))
         {
-
-            up = true;
-            down = false;
             RetakePhoto();
-            Debug.Log("Down");
+        }
+    }
+
+    private void AddPicPoolCount()
+    {
+        if (picPool.poolList.Count < minCount)
+        {
+            picPool.AddToPool();
+            AddPicPoolCount();
         }
     }
 
@@ -86,6 +81,11 @@ public class GetCamera : MonoBehaviour
             LoadAllPicture();
         else
             StartCoroutine(LoadWWWAllPicture());
+
+        picPool.InitPool(allTex2d.Count);
+        AddPicPoolCount();
+
+
         // 设备不同的坐标转换
 #if UNITY_IOS || UNITY_IPHONE
         img.transform.Rotate (new Vector3 (0, 180, 90));
@@ -101,7 +101,22 @@ public class GetCamera : MonoBehaviour
         {
             //无摄像头或者手动关闭摄像头
         }
+       
+        RegistBtn();
     }
+
+    private void RegistBtn()
+    {
+        returnBtn.onClick.AddListener(() =>
+        {
+            lastCount = 0;
+            reviewMsgUI.SetActive(false);
+            drawManager.isForbid = false;
+            //drawManager.ShowCursor(true);
+        });
+    }
+
+
 
     IEnumerator CallCamera()
     {
@@ -131,8 +146,6 @@ public class GetCamera : MonoBehaviour
             Isget = true;
             StartCoroutine(GetTexture2d());
         }
-        up = false;
-        down = true;
     }
 
     //重拍
@@ -151,22 +164,20 @@ public class GetCamera : MonoBehaviour
             Isget = false;
             photo.SetActive(false);
         }
-        up = true;
-        down = false;
     }
 
 
-    //保存图片
+    //上传留言
     public void Save()
     {
         Timing.Instance.Ztime();
         v1 = mCamera.WorldToScreenPoint(startPoint.position);
         v2 = mCamera.WorldToScreenPoint(endPoint.position);
-        //计算鼠标划定范围的长和宽~~
-        //Debug.Log(Mathf.Abs(v1.x - v2.x).ToString("F0"));
-        //Debug.Log(Mathf.Abs(v1.y - v2.y).ToString("F0"));
         w = int.Parse(Mathf.Abs(v1.x - v2.x).ToString("F0"));
         h = int.Parse(Mathf.Abs(v1.y - v2.y).ToString("F0"));
+        //计算鼠标划定范围的长和宽~~
+        //Debug.Log(w);
+        //Debug.Log(h);
         StartCoroutine(GetCapture());
     }
 
@@ -190,27 +201,36 @@ public class GetCamera : MonoBehaviour
         string timestamp = QR_Code.GetTimeStamp().ToString();
 
         string filename = Application.streamingAssetsPath + "/Imags/" + DateTime.Now.ToString("yyyy-MM-dd") + "-" + timestamp + ".png";
-        Debug.Log(string.Format("截屏了一张照片: {0}", filename));
+        //Debug.Log(string.Format("截屏了一张照片: {0}", filename));
         File.WriteAllBytes(filename, imagebytes);
 
+        string picName = filename.Replace(Application.streamingAssetsPath, string.Empty).Replace('/', '\\');
+        //Debug.LogError("filename = " + picName);
+        LoadSinglePic(filename, picName);
+        picPool.AddToPool();
 
-        if (loadType == LoadType.IO)
-            LoadAllPicture();
-        else
-            StartCoroutine(LoadWWWAllPicture());
-
-        qr.UpLoad(imagebytes, timestamp);
-
-        //GameObject vc = GameObject.Find("VectorCanvas");
-
-        //if (vc != null)
-        //{
-        //    qr.hidecan = vc;
-        //    qr.hidecan.SetActive(false);
-        //}
+        qr.UploadPNG(imagebytes, timestamp);
     }
 
+    //加载单张本地图片
+    private void LoadSinglePic(string path,string texName)
+    {
+        FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+        fileStream.Seek(0, SeekOrigin.Begin);
+        byte[] bytes = new byte[fileStream.Length];
+        fileStream.Read(bytes, 0, (int)fileStream.Length);
+        System.Drawing.Image image = System.Drawing.Image.FromStream(fileStream);
+        fileStream.Close();
+        fileStream.Dispose();
+        fileStream = null;
 
+        int width = image.Width;
+        int height = image.Height;
+        Texture2D tmp = new Texture2D(width, height);
+        tmp.LoadImage(bytes);
+        tmp.name = texName;
+        allTex2d.Add(tmp);
+    }
 
     List<Texture2D> allTex2d = new List<Texture2D>();
     Hashtable ht = new Hashtable();
@@ -254,21 +274,8 @@ public class GetCamera : MonoBehaviour
         GetAllFiles(dir);
         foreach (DictionaryEntry de in ht)
         {
-            FileStream fileStream = new FileStream(streamingPath + "/" + de.Key, FileMode.Open, FileAccess.Read);
-            fileStream.Seek(0, SeekOrigin.Begin);
-            byte[] bytes = new byte[fileStream.Length];
-            fileStream.Read(bytes, 0, (int)fileStream.Length);
-            System.Drawing.Image image = System.Drawing.Image.FromStream(fileStream);
-            fileStream.Close();
-            fileStream.Dispose();
-            fileStream = null;
-
-            int width = image.Width;
-            int height = image.Height;
-            Texture2D tmp = new Texture2D(width,height);
-            tmp.LoadImage(bytes);
-            tmp.name = de.Key.ToString();
-            allTex2d.Add(tmp);
+            //Debug.LogError("de.Key = " + de.Key); 
+            LoadSinglePic(streamingPath + "/" + de.Key, de.Key.ToString());
         }
     }
 
@@ -282,7 +289,7 @@ public class GetCamera : MonoBehaviour
             for (int i = 0; i < timingSprite.Length; i++)
             {
                 countDownImg.GetComponent<Image>().sprite = timingSprite[i];
-                yield return new WaitForSeconds(1);
+                yield return new WaitForSeconds(1);//倒计时
             }
         }
 
@@ -333,9 +340,8 @@ public class GetCamera : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 删除历史图片
-    /// </summary>
+    #region 删除历史图片
+
     private void DestoryHistoryImgs(string _creatTime,string _strType, FileSystemInfo file)
     {
         int lerpTime = 0;
@@ -349,33 +355,35 @@ public class GetCamera : MonoBehaviour
 
         //获取图片创建日期
         string[] str = _creatTime.Split('/');
+        //Debug.LogError(_creatTime);
         int strYearNum = int.Parse(str[2]);
-        int strMonthNum = int.Parse(str[1]);
-        int strDayNum = int.Parse(str[0]);
-
+        int strMonthNum = int.Parse(str[0]);
+        int strDayNum = int.Parse(str[1]);
+        //Debug.LogError(strYearNum + "年 " + strMonthNum + "月 " + strDayNum + "日");
 
         string nowDate = DateTime.Now.ToString("yyyy-MM-dd");
         string[] nowDateStr = nowDate.Split('-');
         int nowYearNum = int.Parse(nowDateStr[0]);
         int nowMonthNum = int.Parse(nowDateStr[1]);
-        int nowDayNuM = int.Parse(nowDateStr[2]);
+        int nowDayNum = int.Parse(nowDateStr[2]);
+        //Debug.LogError(nowYearNum + "Year " + nowMonthNum + "Month " + nowDayNum + "Day");
 
         if (nowYearNum == strYearNum)//年份相同
         {
             if (nowMonthNum == strMonthNum)//月份相同
             {
-                lerpTime = nowDayNuM - strDayNum;
+                lerpTime = nowDayNum - strDayNum;
             }
             else if (nowMonthNum > strMonthNum)
             {
                 AddMonthLerpTime(ref lerpTime, nowYearNum, strYearNum, nowMonthNum, strMonthNum);
-                lerpTime = lerpTime - strDayNum + nowDayNuM;
+                lerpTime = lerpTime - strDayNum + nowDayNum;
             }
         }
         else if (nowYearNum > strYearNum)//跨年
         {
             AddYearLerpTime(ref lerpTime, nowYearNum, strYearNum, nowMonthNum, strMonthNum);
-            lerpTime = lerpTime - strDayNum + nowDayNuM;
+            lerpTime = lerpTime - strDayNum + nowDayNum;
         }
 
         if (lerpTime >= maxDay)
@@ -403,7 +411,6 @@ public class GetCamera : MonoBehaviour
             }
         }
     }
-
 
     //每年平年闰年加的总天数不一样
     private void AddYearLerpTime(ref int lerpTime, int _nowYearNum, int _stryearNum, int _nowMonthNum, int _strMonthNum)
@@ -442,7 +449,6 @@ public class GetCamera : MonoBehaviour
         }
     }
 
-
     private int GetMonthLerp(int yearNum,int monthNum)
     {
         int monthLerp = 0;
@@ -466,19 +472,21 @@ public class GetCamera : MonoBehaviour
         return monthLerp;
     }
 
+    #endregion
+
+    private const int minCount = 21;
+    private int lastCount;
 
     //留言回顾
     public void ImgGet()
     {
+        float t = Time.realtimeSinceStartup;
+
         Timing.Instance.Stop();
         //cameraImage.gameObject.SetActive(false);
         reviewMsgUI.SetActive(true);
+        drawManager.isForbid = true;
 
-        ImageMove[] objs = reviewMsgUI.transform.Find("Top").GetComponentsInChildren<ImageMove>();
-        foreach (var item in objs)
-        {
-            Destroy(item.gameObject);
-        }
         int index = 0;
 
         if (allTex2d.Count == 0)
@@ -491,39 +499,61 @@ public class GetCamera : MonoBehaviour
                 return;
         }
 
-        Vector3 startpos = reviewMsgUI.transform.Find("Top").transform.localPosition + new Vector3(-610, 270);
+        allTex2d.Sort(IndexSort);
+
+        float t1 = Time.realtimeSinceStartup - t;
+        //Debug.LogError(t1);
+        t = Time.realtimeSinceStartup;
+
+        Transform topTrans = reviewMsgUI.transform.Find("Top").transform;
+
+        Vector3 startpos = topTrans.localPosition + new Vector3(-610, 270);
         suncount = allTex2d.Count / 3;
         int count = allTex2d.Count;
-        if (count < 21)
+        if (count < minCount)
         {
-            count = 21;
+            count = minCount;
             suncount = count / 3;
         }
-        //print(count);
-        for (int z = 0; z < count; z++)
+
+        for (int i = 0; i < picPool.poolList.Count; i++)
         {
-            GameObject obj = new GameObject();
-            obj.gameObject.name = "item";
-            obj.AddComponent<Image>();
-            obj.transform.SetParent(reviewMsgUI.transform.Find("Top").transform, false);
+            GameObject obj = picPool.poolList[i];
+            obj.name = "item" + i;
+            if (!obj.GetComponent<RawImage>())
+                obj.AddComponent<RawImage>();
+            obj.transform.SetParent(topTrans, false);
             obj.transform.localScale = Vector3.one;
             obj.transform.localPosition = Vector3.zero;
-            obj.AddComponent<ImageMove>();
-            Texture2D tmp = allTex2d[z > allTex2d.Count - 1 ? UnityEngine.Random.Range(0, allTex2d.Count) : z];
-            tmp.filterMode = FilterMode.Point;
-            Sprite sprite = Sprite.Create(tmp, new Rect(0, 0, tmp.width, tmp.height), new Vector2(1f, 1f));
+            if (!obj.GetComponent<ImageMove>())
+                obj.AddComponent<ImageMove>();
 
-            obj.GetComponent<Image>().sprite = sprite;
+            if (i - lastCount > allTex2d.Count - 1)
+            {
+                lastCount = i;
+            }
+            //最近的图片在最前
+            Texture2D tmp = allTex2d[i - lastCount];//allTex2d[i > allTex2d.Count - 1 ? UnityEngine.Random.Range(0, allTex2d.Count) : i]; //allTex2d[i];
+            tmp.filterMode = FilterMode.Point;
+
+            obj.GetComponent<RawImage>().texture = tmp;
             obj.GetComponent<RectTransform>().sizeDelta = new Vector3(1296, 864);
             obj.GetComponent<RectTransform>().localScale = new Vector3(0.3f, 0.3f);
-            if (z / 3 != index)
+            if (i / 3 != index)
             {
-                //Debug.Log(z / 4);
-                index = z / 3;
-                startpos = reviewMsgUI.transform.Find("Top").transform.localPosition + new Vector3(-610 + index * 416, 270);
+                index = i / 3;
+                startpos = topTrans.localPosition + new Vector3(-610 + index * 416, 270);
             }
             obj.transform.localPosition = startpos;
             startpos = startpos + new Vector3(0, -274);
         }
+
+        float t2 = Time.realtimeSinceStartup - t;
+        //Debug.LogError(t2);
+    }
+
+    public static int IndexSort(Texture2D a,Texture2D b)
+    {
+        return string.Compare(b.name, a.name);
     }
 }

@@ -6,6 +6,7 @@ public class EventTriggerListener : EventTrigger
 {
     public delegate void VoidDelegateParam(GameObject go);
     public VoidDelegateParam onClick;
+    public VoidDelegateParam onClickDouble;
     public VoidDelegateParam onDown;
     public VoidDelegateParam onEnter;
     public VoidDelegateParam onExit;
@@ -20,7 +21,7 @@ public class EventTriggerListener : EventTrigger
     private bool longPressTriggered;
     private float durationThreshold =1f;
     private float timePressStarted;
-
+    private float t1, t2;
 
     static public EventTriggerListener Get(GameObject go)
     {
@@ -48,6 +49,12 @@ public class EventTriggerListener : EventTrigger
         if (!longPressTriggered)
         {
             if (onClick != null) onClick(gameObject);
+            t2 = Time.realtimeSinceStartup;
+            if (t2 - t1 < 0.2)
+            {
+                if (onClickDouble != null) onClickDouble(gameObject);
+            }
+            t1 = t2;
         }
     }
 

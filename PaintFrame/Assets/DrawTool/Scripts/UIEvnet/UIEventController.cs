@@ -161,6 +161,10 @@ public class UIEventController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 其他UI显示过快可以把这个API给截断，因为其他UI遮挡了Camera的射线检测
+    /// </summary>
+    /// <param name="go"></param>
     private void OnPointerUp(GameObject go)
     {
         UIEventManager.PointUpEvent();

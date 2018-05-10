@@ -50,10 +50,12 @@ public class DrawManager : MonoBehaviour
             virtualKeyPosition = new Vector3(Input.mousePosition.x, Input.mousePosition.y);
         }
 
-        if (RectTransformUtility.RectangleContainsScreenPoint(clampRect, virtualKeyPosition, Camera.main))
-        {
-            DrawCursor(GetCurrentPlatformClickPosition(Camera.main));
-        }
+        //画笔显示
+        //if (RectTransformUtility.RectangleContainsScreenPoint(clampRect, virtualKeyPosition, Camera.main))
+        //{
+        //    DrawCursor(GetCurrentPlatformClickPosition(Camera.main));
+        //}
+
         //else
         //ReleaseAll();
         /*---关闭区域选择的方式，用模板测试的方法来做，更流畅------------------------------------------------*/
@@ -353,7 +355,7 @@ public class DrawManager : MonoBehaviour
     #region 获取绘制位置
     private void DrawCursor(Vector3 clickPosition)
     {
-        if (cursor == null)
+        if (cursor == null || !cursor.activeInHierarchy)
             return;
         cursor.transform.position = clickPosition + cursorOffset;
     }
@@ -457,8 +459,14 @@ public class DrawManager : MonoBehaviour
         currentTool.color = gradient;
     }
 
-
     public void PrintScreen() { }
+
+    public void ShowCursor(bool active)
+    {
+        if (cursor == null)
+            return;
+        cursor.SetActive(active);
+    }
 
     #endregion
 }
