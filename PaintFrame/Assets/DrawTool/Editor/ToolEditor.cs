@@ -307,7 +307,7 @@ public class ToolEditor : EditorWindow
     {
         if (parent == null)
             return;
-        go.transform.SetParent(parent);
+        go.transform.SetParent(parent); 
         go.layer = parent.gameObject.layer;
         go.transform.localPosition = Vector3.zero;
         go.transform.localScale = Vector3.one;

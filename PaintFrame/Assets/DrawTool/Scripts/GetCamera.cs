@@ -40,6 +40,7 @@ public class GetCamera : MonoBehaviour
     {
         drawManager = GameObject.FindObjectOfType<DrawManager>();
         isOpenCameraDevice = bool.Parse(Configs.Instance.LoadText("开启摄像头", "false/true"));
+        maxDay = int.Parse(Configs.Instance.LoadText("本地相片保存期限", "day"));
     }
 
     // Use this for initialization
@@ -66,14 +67,10 @@ public class GetCamera : MonoBehaviour
         }
     }
 
-    private void AddPicPoolCount()
-    {
-        if (picPool.poolList.Count < minCount)
-        {
-            picPool.AddToPool();
-            AddPicPoolCount();
-        }
-    }
+    [HideInInspector]
+    public static int Index;
+    TObjectPool<GameObjData> Tpool = new TObjectPool<GameObjData>(0, GameObjData.CreateObj, GameObjData.ReleaseObj,0, null);
+    public Transform picPoolTrans;
 
     void InitData()
     {
@@ -82,8 +79,12 @@ public class GetCamera : MonoBehaviour
         else
             StartCoroutine(LoadWWWAllPicture());
 
-        picPool.InitPool(allTex2d.Count);
-        AddPicPoolCount();
+        int count = allTex2d.Count < minCount ? minCount : allTex2d.Count;
+        Tpool = new TObjectPool<GameObjData>(count, GameObjData.CreateObj, GameObjData.ReleaseObj, string.Empty, picPoolTrans,0);
+        for (int i = 0; i < count; i++)
+            Tpool.OnActiveGameObject(pQueue);
+
+        //picPool.InitPool(count);
 
 
         // 设备不同的坐标转换
@@ -207,7 +208,8 @@ public class GetCamera : MonoBehaviour
         string picName = filename.Replace(Application.streamingAssetsPath, string.Empty).Replace('/', '\\');
         //Debug.LogError("filename = " + picName);
         LoadSinglePic(filename, picName);
-        picPool.AddToPool();
+        //picPool.AddToPool();
+        Tpool.OnActiveGameObject(pQueue);
 
         qr.UploadPNG(imagebytes, timestamp);
     }
@@ -342,10 +344,11 @@ public class GetCamera : MonoBehaviour
 
     #region 删除历史图片
 
+    int maxDay;
+
     private void DestoryHistoryImgs(string _creatTime,string _strType, FileSystemInfo file)
     {
         int lerpTime = 0;
-        int maxDay = 60;//删除60天之前的图片
 
         //用图片名获取日期
         //string[] str = _strType.Split('-');
@@ -386,7 +389,7 @@ public class GetCamera : MonoBehaviour
             lerpTime = lerpTime - strDayNum + nowDayNum;
         }
 
-        if (lerpTime >= maxDay)
+        if (lerpTime >= maxDay)//删除保存期限之前的图片
         {
             file.Delete();
             file = null;
@@ -476,6 +479,17 @@ public class GetCamera : MonoBehaviour
 
     private const int minCount = 21;
     private int lastCount;
+    Queue<GameObjData> pQueue = new Queue<GameObjData>();
+
+    //对象池对象隐藏
+    private void InActiveGameObject()
+    {
+        if (pQueue.Count == 0)
+            return;
+        GameObjData obj = pQueue.Dequeue();
+        obj.gameObject.SetActive(false);
+        Tpool.InActiveGameObject(obj);
+    }
 
     //留言回顾
     public void ImgGet()
@@ -516,10 +530,13 @@ public class GetCamera : MonoBehaviour
             suncount = count / 3;
         }
 
-        for (int i = 0; i < picPool.poolList.Count; i++)
+        //Debug.Log(pPool.GetActiveObjectCount());
+        //picPool.poolList
+        for (int i = 0; i < Tpool.GetActiveObjectCount(); i++)
         {
-            GameObject obj = picPool.poolList[i];
-            obj.name = "item" + i;
+            GameObjData objData = Tpool.GetActiveObject(i);
+            GameObject obj = objData.gameObject;
+            //obj.name = "item" + i;
             if (!obj.GetComponent<RawImage>())
                 obj.AddComponent<RawImage>();
             obj.transform.SetParent(topTrans, false);
