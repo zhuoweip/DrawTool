@@ -81,16 +81,32 @@ public class QR_Code : MonoBehaviour
         drawManager.isForbid = true;
     }
 
+    string url = "http://sq.gzcloudbeingbu.com/Webpage/MyScreenshots.aspx";
+
+    public void UpLoad(byte[] bytes, string timestamp)
+    {
+        StartCoroutine(UploadPNG(bytes, timestamp));
+    }
+
     //上传图片扫描二维码识别
-    public void UploadPNG(byte[] bytes,string timestamp)
+    private IEnumerator UploadPNG(byte[] bytes,string timestamp)
     {
         Dictionary<string, string> heads = new Dictionary<string, string>();
         heads.Add("PicNum", timestamp);
         heads.Add("Continen", "");
 
-        print("Finished Uploading Screenshot");
-        Lastresult = "http://sq.gzcloudbeingbu.com/Picture/" + DateTime.Now.ToString("yyyy-MM-dd")+"/" + timestamp+ ".png";
-        ShowSaveInfo();
+        WWW www = new WWW(url, bytes, heads);//上传到服务器
+        yield return www;
+        if (!string.IsNullOrEmpty(www.error))
+        {
+            print(www.error);
+        }
+        else
+        {
+            print("Finished Uploading Screenshot");
+            Lastresult = "http://sq.gzcloudbeingbu.com/Picture/" + DateTime.Now.ToString("yyyy-MM-dd") + "/" + timestamp + ".png";
+            ShowSaveInfo();
+        }
     }
 
     public static long GetTimeStamp(bool bflag = true)
