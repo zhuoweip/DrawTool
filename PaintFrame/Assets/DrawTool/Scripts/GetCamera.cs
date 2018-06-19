@@ -457,7 +457,7 @@ public class GetCamera : MonoBehaviour
         int monthLerp = 0;
         if (monthNum == 2)
         {
-            if (yearNum % 4 == 0)//闰年
+            if (DateTime.IsLeapYear(DateTime.Now.Date.Year))//闰年//yearNum % 4 == 0
                 monthLerp = 29;
             else
                 monthLerp = 28;

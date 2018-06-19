@@ -18,6 +18,7 @@ public class ExampleEditor : Editor
 
         EditorGUILayout.LabelField("Text");
 
+        EditorGUILayout.HelpBox("请直接删除该对象", MessageType.Info);
         var newValue = EditorGUILayout.TextArea(text.stringValue, GUILayout.ExpandWidth(true), GUILayout.Height(300));
         if (newValue != text.stringValue) text.stringValue = newValue;
 
