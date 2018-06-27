@@ -9,7 +9,7 @@
 	},
 	"开启摄像头":
 	{
-	  "false/true":"false"
+	  "false/true":"true"
 	},
 	"本地相片保存期限":
 	{
