@@ -8,8 +8,8 @@ public class EventTriggerListener : EventTrigger
     public VoidDelegateParam onClick;
     public VoidDelegateParam onClickDouble;
     public VoidDelegateParam onDown;
-    public VoidDelegateParam onEnter;
-    public VoidDelegateParam onExit;
+    public VoidDelegateParam onEnter;//悬停进入
+    public VoidDelegateParam onExit;//悬停退出
     public VoidDelegateParam onUp;
     public VoidDelegateParam onSelect;
     public VoidDelegateParam onUpdateSelect;
@@ -19,7 +19,7 @@ public class EventTriggerListener : EventTrigger
 
     private bool isPointDown;
     private bool longPressTriggered;
-    private float durationThreshold =1f;
+    private float durationThreshold = 1f;
     private float timePressStarted;
     private float t1, t2;
 
@@ -37,12 +37,11 @@ public class EventTriggerListener : EventTrigger
             if (Time.time - timePressStarted > durationThreshold)
             {
                 longPressTriggered = true;
-                if (onLongPress !=null)
+                if (onLongPress != null)
                     onLongPress();
             }
         }
     }
-
 
     public override void OnPointerClick(PointerEventData eventData)
     {
