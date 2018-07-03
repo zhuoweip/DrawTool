@@ -2,6 +2,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -17,6 +19,9 @@ public enum LoadType
 public class GetCamera : MonoBehaviour
 {
     public LoadType loadType = LoadType.IO;
+    public AIType AIType = AIType.Tencent;
+    [EnumLabel("模板类型")]
+    public Template template = Template.cf_yuren_baozha;
 
     public Camera mCamera;                            
     public GameObject reviewMsgUI;                    //留言回顾UI
@@ -26,7 +31,7 @@ public class GetCamera : MonoBehaviour
     public RawImage cameraImage;                      //获取摄像机投影
     public GameObject countDownImg;                   //倒计时图片
     public Sprite[] timingSprite;                     //倒计时序列帧
-    public GameObject photo;                          //截取拍摄照片
+    public RawImage photo;                          //截取拍摄照片
 
     public Text genderText;                           //性别
     public Text ageText;                              //年龄
@@ -37,6 +42,7 @@ public class GetCamera : MonoBehaviour
 
     private WebCamTexture camTexture;
     private JObject detectInfo;
+    private string result;
 
     public QR_Code qr;
     private DrawManager drawManager;
@@ -47,11 +53,13 @@ public class GetCamera : MonoBehaviour
     public int suncount = 0;
 
     private bool isOpenCameraDevice;
+    private bool isOpenAI;
     private void Awake()
     {
         drawManager = GameObject.FindObjectOfType<DrawManager>();
         isOpenCameraDevice = bool.Parse(Configs.Instance.LoadText("开启摄像头", "false/true"));
         maxDay = int.Parse(Configs.Instance.LoadText("本地相片保存期限", "day"));
+        isOpenAI = bool.Parse(Configs.Instance.LoadText("开启人脸识别", "openAI"));
     }
 
     // Use this for initialization
@@ -65,6 +73,17 @@ public class GetCamera : MonoBehaviour
         if (!drawManager.isForbid && reviewMsgUI.activeInHierarchy)
         {
             drawManager.isForbid = true;
+        }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            RetakePhoto(); 
+        }
+
+        if (isOpenAI && camTexture != null)
+        {
+            GetPhotoPixel(camTexture);
+            //FacialRecognition.Instance.FaceTracking(GetPhotoPixel(camTexture));
         }
     }
 
@@ -133,6 +152,19 @@ public class GetCamera : MonoBehaviour
         }
     }
 
+    private byte[] Bitmap2Byte(Bitmap bitmap)
+    {
+        using (MemoryStream stream = new MemoryStream())
+        {
+            bitmap.Save(stream, ImageFormat.Png);
+            byte[] data = new byte[stream.Length];
+            // 重置指针
+            stream.Seek(0, SeekOrigin.Begin);
+            stream.Read(data, 0, Convert.ToInt32(stream.Length));
+            return data;
+        }
+    }
+
     //获取摄像头像素
     private byte[] GetPhotoPixel(WebCamTexture ca)
     {
@@ -149,8 +181,7 @@ public class GetCamera : MonoBehaviour
             }
             ++y;
         }
-        texture.Apply();
-        //        texture.name = name ;
+        //texture.Apply();
         byte[] pngData = GetJpgData(texture);
         return pngData;
     }
@@ -159,13 +190,13 @@ public class GetCamera : MonoBehaviour
     private byte[] GetJpgData(Texture2D te)
     {
         byte[] data = null;
-        int quelity = 75;
-        while (quelity > 20)
+        int quality = 75;
+        while (quality > 20)
         {
-            data = te.EncodeToJPG(quelity);
+            data = te.EncodeToJPG(quality);
             int size = data.Length / 1024;
             if (size > 30)
-                quelity -= 5;
+                quality -= 5;
             else
                 break;
         }
@@ -198,7 +229,7 @@ public class GetCamera : MonoBehaviour
         if (Isget)
         {
             Isget = false;
-            photo.SetActive(false);
+            photo.gameObject.SetActive(false);
         }
     }
 
@@ -222,7 +253,7 @@ public class GetCamera : MonoBehaviour
         //等待所有的摄像机跟GUI渲染完成
         yield return new WaitForEndOfFrame();
 
-        photo.SetActive(false);
+        photo.gameObject.SetActive(false);
 
         Texture2D tex = new Texture2D(w, h, TextureFormat.RGB24, false);
         //----------------------------------------------------------------------------计算区域----------------------------------------------------
@@ -279,7 +310,10 @@ public class GetCamera : MonoBehaviour
     {
         allTex2d.Clear();
         string streamingPath = Application.streamingAssetsPath;
-        DirectoryInfo dir = new DirectoryInfo(streamingPath + "/Imags/");//初始化一个DirectoryInfo类的对象
+        string path = streamingPath + "/Imags";
+        if (!File.Exists(path))
+            Directory.CreateDirectory(path);
+        DirectoryInfo dir = new DirectoryInfo(path + "/");//初始化一个DirectoryInfo类的对象
         FileManager.GetAllFiles(dir,maxDay, ht);
         foreach (DictionaryEntry de in ht)
         {
@@ -306,7 +340,10 @@ public class GetCamera : MonoBehaviour
     {
         allTex2d.Clear();
         string streamingPath = Application.streamingAssetsPath;
-        DirectoryInfo dir = new DirectoryInfo(streamingPath + "/Imags/");//初始化一个DirectoryInfo类的对象
+        string path = streamingPath + "/Imags";
+        if (!File.Exists(path))
+            Directory.CreateDirectory(path);
+        DirectoryInfo dir = new DirectoryInfo(path + "/");//初始化一个DirectoryInfo类的对象
         FileManager.GetAllFiles(dir, maxDay, ht);
         foreach (DictionaryEntry de in ht)
         {
@@ -324,7 +361,7 @@ public class GetCamera : MonoBehaviour
         {
             for (int i = 0; i < timingSprite.Length; i++)
             {
-                countDownImg.GetComponent<Image>().sprite = timingSprite[i];
+                countDownImg.GetComponent<UnityEngine.UI.Image>().sprite = timingSprite[i];
                 yield return new WaitForSeconds(1);//倒计时
             }
         }
@@ -332,26 +369,36 @@ public class GetCamera : MonoBehaviour
         yield return new WaitForEndOfFrame();
         //把图片数据转换为byte数组  
         Texture2D texture = new Texture2D(camTexture.width, camTexture.height);
-        int y = 0;
-        while (y < texture.height)
+        byte[] bytes = GetPhotoPixel(camTexture);
+        texture.LoadImage(bytes);
+        photo.texture = texture;
+        if (isOpenAI && TcpManager.IsOnLine())//在线检测
         {
-            int x = 0;
-            while (x < texture.width)
+            if (AIType == AIType.Tencent)
             {
-                Color color = camTexture.GetPixel(x, y);
-                texture.SetPixel(x, y, color);
-                ++x;
+                result = FacialRecognition.Instance.FaceDect(bytes);
+                JsonParse.FaceDetect de = JsonParse.FaceDetect.ParseJsonFaceDetect(result);
+                ShowDetectInfo(de);
+                FacialRecognition.Instance.FaceMerge(bytes, photo, template);
             }
-            ++y;
+            else
+            {
+                detectInfo = FaceDetector.Instance.FaceDetect(bytes);
+                ShowDetectInfo(detectInfo);
+            }
         }
-        texture.Apply();
-        photo.GetComponent<RawImage>().texture = texture;
-        if (TcpManager.IsOnLine())//在线检测
-        {
-            detectInfo = FaceDetector.Instance.FaceDetect(GetPhotoPixel(camTexture));
-            ShowDetectInfo(detectInfo);
-        }
-        photo.SetActive(true);
+        photo.gameObject.SetActive(true);
+    }
+
+    private void ShowDetectInfo(JsonParse.FaceDetect de)
+    {
+        string genderMsg = FacialRecognition.Instance.GetGenderStr(de.face[0].gender);
+        string ageMsg = (de.face[0].age).ToString();
+        string scoreMsg = (de.face[0].beauty).ToString();
+        string expressionMsg = FacialRecognition.Instance.GetExpressionStr(de.face[0].expression);
+        string glassesMsg = (de.face[0].glasses).ToString();
+        string raceMsg = "null";
+        SetInfoText(genderMsg, ageMsg, scoreMsg, expressionMsg, glassesMsg, raceMsg);
     }
 
     private void ShowDetectInfo(JObject info)
@@ -367,13 +414,25 @@ public class GetCamera : MonoBehaviour
             var expression = value["expression"]["type"];
             var glasses = value["glasses"]["type"];
             var race = value["race"]["type"];
-            genderText.text = StringUtil.SetStringColor("性别", STRING_COLOR.Red) + StringUtil.SetStringColor(gender.ToString() == "male"?"男":"女", STRING_COLOR.White);
-            ageText.text = StringUtil.SetStringColor("年龄", STRING_COLOR.Red) + StringUtil.SetStringColor(age.ToString(), STRING_COLOR.Yellow);
-            scoreText.text = StringUtil.SetStringColor("颜值", STRING_COLOR.Red) + StringUtil.SetStringColor(((int)(float.Parse(score.ToString()))).ToString(), STRING_COLOR.Yellow);
-            expressionText.text = StringUtil.SetStringColor("表情", STRING_COLOR.Red) + StringUtil.SetStringColor(FaceDetector.Instance.GetExpressionStr(expression.ToString()), STRING_COLOR.Yellow);
-            glassText.text = StringUtil.SetStringColor("配戴眼镜", STRING_COLOR.Red) + StringUtil.SetStringColor(FaceDetector.Instance.GetGlassStr(glasses.ToString()), STRING_COLOR.Yellow);
-            raceText.text = StringUtil.SetStringColor("人种", STRING_COLOR.Red) + StringUtil.SetStringColor(FaceDetector.Instance.GetRaceStr(race.ToString()), STRING_COLOR.Yellow);
+            string genderMsg = gender.ToString() == "male" ? "男" : "女";
+            string ageMsg = age.ToString();
+            string scoreMsg = ((int)(float.Parse(score.ToString()))).ToString();
+            string expressionMsg = FaceDetector.Instance.GetExpressionStr(expression.ToString());
+            string glassesMsg = FaceDetector.Instance.GetGlassStr(glasses.ToString());
+            string raceMsg = FaceDetector.Instance.GetRaceStr(race.ToString());
+
+            SetInfoText(genderMsg, ageMsg, scoreMsg, expressionMsg, glassesMsg, raceMsg);
         }
+    }
+
+    private void SetInfoText(string gender,string age,string score,string expression,string glasses,string race)
+    {
+        genderText.text = StringUtil.SetStringColor("性别", STRING_COLOR.Red) + StringUtil.SetStringColor(gender, STRING_COLOR.White);
+        ageText.text = StringUtil.SetStringColor("年龄", STRING_COLOR.Red) + StringUtil.SetStringColor(age, STRING_COLOR.Yellow);
+        scoreText.text = StringUtil.SetStringColor("颜值", STRING_COLOR.Red) + StringUtil.SetStringColor(score, STRING_COLOR.Yellow);
+        expressionText.text = StringUtil.SetStringColor("表情", STRING_COLOR.Red) + StringUtil.SetStringColor(expression, STRING_COLOR.Yellow);
+        glassText.text = StringUtil.SetStringColor("配戴眼镜", STRING_COLOR.Red) + StringUtil.SetStringColor(glasses, STRING_COLOR.Yellow);
+        raceText.text = StringUtil.SetStringColor("人种", STRING_COLOR.Red) + StringUtil.SetStringColor(race, STRING_COLOR.Yellow);
     }
 
     private const int minCount = 21;

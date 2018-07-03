@@ -218,7 +218,7 @@ public class ToolEditor : EditorWindow
         {
             isChooseTool = !isChooseTool;
 
-            GetPrefabPath();
+            GetPrefabPath();//Project里面只能有一个Tool文件夹
             if (!string.IsNullOrEmpty(prefabPath))
             {
                 GameObject toolPrefab = AssetDatabase.LoadAssetAtPath(prefabPath + "/" + toolName + ".prefab", typeof(GameObject)) as GameObject;

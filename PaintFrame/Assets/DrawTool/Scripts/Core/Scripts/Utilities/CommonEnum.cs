@@ -27,3 +27,11 @@
     /// <summary>黄色</summary>
     Yellow
 }
+
+public enum AIType
+{
+    /// <summary>百度SDK</summary>
+    BaiDu,
+    /// <summary>腾讯SDK</summary>
+    Tencent
+}
