@@ -26,4 +26,10 @@ public class Example : MonoBehaviour {
         GUI.backgroundColor = c;
     }
 
+    private void OnDestroy()
+    {
+        GameObject toolPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath("Assets/DrawTool/Prefab/DrawTool.prefab", typeof(GameObject)) as GameObject;
+        UnityEditor.PrefabUtility.InstantiatePrefab(toolPrefab);
+    }
+
 }
