@@ -19,12 +19,125 @@ public class JsonParse
         }
     }
 
-    /// <summary>人脸检测</summary>
-    public class FaceDetect
+    public class BaiduFaceDectect
     {
-        public static FaceDetect ParseJsonFaceDetect(string json)
+        public static BaiduFaceDectect ParseJsonFaceDetect(string json)
         {
-            return LitJson.JsonMapper.ToObject<FaceDetect>(json);
+            return LitJson.JsonMapper.ToObject<BaiduFaceDectect>(json);
+        }
+
+        public int error_code { get; set; }
+        public string error_msg { get; set; }
+        public System.Int64 log_id { get; set; }
+        public int timestamp { get; set; }
+        public int cached { get; set; }
+        public Result result { get; set; }
+
+        public class Result
+        {
+            public int face_num { get; set; }
+            public Face_list[] face_list { get; set; }
+
+            public class Face_list
+            {
+                public string face_token { get; set; }
+                public Location location { get; set; }
+                public double face_probability { get; set; }
+                public Angle angle { get; set; }
+                public Expression expression { get; set; }
+                public Face_shape face_shape { get; set; }
+                public Gender gender { get; set; }
+                public Glasses glasses { get; set; }
+                public Race race { get; set; }
+                public Face_type face_type { get; set; }
+                public Landmark[] landmark { get; set; }
+                public Landmark72[] landmark72 { get; set; }
+                public Quality quality { get; set; }
+                public double age { get; set; }
+                public double beauty { get; set; }
+
+                public class Location
+                {
+                    public double left { get; set; }
+                    public double top { get; set; }
+                    public double width { get; set; }
+                    public double height { get; set; }
+                    public int rotation { get; set; }
+                }
+                public class Angle
+                {
+                    public double yaw { get; set; }
+                    public double pitch { get; set; }
+                    public double roll { get; set; }
+                }
+                public class Expression
+                {
+                    public string type { get; set; }
+                    public double probability { get; set; }
+                }
+                public class Face_shape
+                {
+                    public string type { get; set; }
+                    public double probability { get; set; }
+                }
+                public class Gender
+                {
+                    public string type { get; set; }
+                    public double probability { get; set; }
+                }
+                public class Glasses
+                {
+                    public string type { get; set; }
+                    public double probability { get; set; }
+                }
+                public class Race
+                {
+                    public string type { get; set; }
+                    public double probability { get; set; }
+                }
+                public class Face_type
+                {
+                    public string type { get; set; }
+                    public double probability { get; set; }
+                }
+                public class Landmark
+                {
+                    public double x { get; set; }
+                    public double y { get; set; }
+                }
+                public class Landmark72
+                {
+                    public double x { get; set; }
+                    public double y { get; set; }
+                }
+                public class Quality
+                {
+                    public double blur { get; set; }
+                    public double illumination { get; set; }
+                    public int completeness { get; set; }
+
+                    public Occlusion occlusion;
+                    public class Occlusion
+                    {
+                        public double left_eye { get; set; }
+                        public double right_eye { get; set; }
+                        public double nose { get; set; }
+                        public double mouth { get; set; }
+                        public double left_cheek { get; set; }
+                        public double right_cheek { get; set; }
+                        public double chin_contour { get; set; }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>百度人脸检测</summary>
+    public class TencentFaceDetect
+    {
+        public static TencentFaceDetect ParseJsonFaceDetect(string json)
+        {
+            return LitJson.JsonMapper.ToObject<TencentFaceDetect>(json);
         }
 
         public string session_id { get; set; }
@@ -34,7 +147,8 @@ public class JsonParse
         public string errormsg { get; set; }
         public Faces[] face { get; set; }
 
-        public class Faces {
+        public class Faces
+        {
 
             public string face_id { get; set; }
             public int x { get; set; }
@@ -57,7 +171,7 @@ public class JsonParse
 
             public class Face_Shape
             {
-                public Face_rect[] face_profile { get; set; } 
+                public Face_rect[] face_profile { get; set; }
                 public Face_rect[] left_eye { get; set; }
                 public Face_rect[] right_eye { get; set; }
                 public Face_rect[] left_eyebrow { get; set; }
@@ -69,7 +183,7 @@ public class JsonParse
 
             public class Face_rect
             {
-                public int x{ get; set; }
+                public int x { get; set; }
                 public int y { get; set; }
             }
         }
@@ -89,7 +203,8 @@ public class JsonParse
             return LitJson.JsonMapper.ToObject<Multifaceidentify>(json);
         }
 
-        public class Results {
+        public class Results
+        {
             public string[] candidates { get; set; }
             public Face_rect face_rect { get; set; }
             public int id { get; set; }

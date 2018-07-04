@@ -146,10 +146,9 @@ public class FacialRecognition : MonoSingleton<FacialRecognition>
         {
             result = Youtu.faceshape(bytes);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-
-            throw;
+            Debug.Log(e.Message);
         }
     }
 

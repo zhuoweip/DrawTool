@@ -2,8 +2,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -19,9 +17,6 @@ public enum LoadType
 public class GetCamera : MonoBehaviour
 {
     public LoadType loadType = LoadType.IO;
-    public AIType AIType = AIType.Tencent;
-    [EnumLabel("模板类型")]
-    public Template template = Template.cf_yuren_baozha;
 
     public Camera mCamera;                            
     public GameObject reviewMsgUI;                    //留言回顾UI
@@ -74,7 +69,15 @@ public class GetCamera : MonoBehaviour
         {
             drawManager.isForbid = true;
         }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            isShowGUI = !isShowGUI;
+        }
 
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            TakePhoto();
+        }
         if (Input.GetKeyDown(KeyCode.R))
         {
             RetakePhoto(); 
@@ -82,9 +85,14 @@ public class GetCamera : MonoBehaviour
 
         if (isOpenAI && camTexture != null)
         {
-            GetPhotoPixel(camTexture);
+            //GetPhotoPixel(camTexture);
             //FacialRecognition.Instance.FaceTracking(GetPhotoPixel(camTexture));
+            //FaceDetector.Instance.FaceDetect(GetPhotoPixel(camTexture));
         }
+
+        //Vector3 pos = tImg.transform.position;
+        //Debug.Log(mCamera.WorldToScreenPoint(new Vector3(pos.x, pos.y, 0)));
+        //Debug.Log(tImg.transform.position);
     }
 
     [HideInInspector]
@@ -152,55 +160,14 @@ public class GetCamera : MonoBehaviour
         }
     }
 
-    private byte[] Bitmap2Byte(Bitmap bitmap)
-    {
-        using (MemoryStream stream = new MemoryStream())
-        {
-            bitmap.Save(stream, ImageFormat.Png);
-            byte[] data = new byte[stream.Length];
-            // 重置指针
-            stream.Seek(0, SeekOrigin.Begin);
-            stream.Read(data, 0, Convert.ToInt32(stream.Length));
-            return data;
-        }
-    }
-
     //获取摄像头像素
     private byte[] GetPhotoPixel(WebCamTexture ca)
     {
-        Texture2D texture = new Texture2D(ca.width, ca.height);
-        int y = 0;
-        while (y < texture.height)
-        {
-            int x = 0;
-            while (x < texture.width)
-            {
-                UnityEngine.Color color = ca.GetPixel(x, y);
-                texture.SetPixel(x, y, color);
-                ++x;
-            }
-            ++y;
-        }
-        //texture.Apply();
-        byte[] pngData = GetJpgData(texture);
-        return pngData;
-    }
-
-    //控制照片大小
-    private byte[] GetJpgData(Texture2D te)
-    {
-        byte[] data = null;
-        int quality = 75;
-        while (quality > 20)
-        {
-            data = te.EncodeToJPG(quality);
-            int size = data.Length / 1024;
-            if (size > 30)
-                quality -= 5;
-            else
-                break;
-        }
-        return data;
+        if (ca == null)
+            return null;
+        Texture2D texture = new Texture2D(ca.width, ca.height, TextureFormat.RGB24, true);
+        texture.SetPixels(ca.GetPixels());
+        return texture.EncodeToJPG();
     }
 
     //拍照
@@ -232,7 +199,6 @@ public class GetCamera : MonoBehaviour
             photo.gameObject.SetActive(false);
         }
     }
-
 
     //上传留言
     public void Save()
@@ -374,60 +340,68 @@ public class GetCamera : MonoBehaviour
         photo.texture = texture;
         if (isOpenAI && TcpManager.IsOnLine())//在线检测
         {
-            if (AIType == AIType.Tencent)
+            result = AIManager.Instance.AIFaceDetect(bytes);
+            Debug.Log(result);
+            if (AIManager.Instance.type == AIType.Tencent)
             {
-                result = FacialRecognition.Instance.FaceDect(bytes);
-                JsonParse.FaceDetect de = JsonParse.FaceDetect.ParseJsonFaceDetect(result);
-                ShowDetectInfo(de);
-                FacialRecognition.Instance.FaceMerge(bytes, photo, template);
+                JsonParse.TencentFaceDetect de = JsonParse.TencentFaceDetect.ParseJsonFaceDetect(result);
+                if (de.face != null && de.face.Length > 0)
+                    ShowDetectInfo(de);
+                AIManager.Instance.AIFaceMerge(bytes, photo);
             }
             else
             {
-                detectInfo = FaceDetector.Instance.FaceDetect(bytes);
-                ShowDetectInfo(detectInfo);
+                JsonParse.BaiduFaceDectect de = JsonParse.BaiduFaceDectect.ParseJsonFaceDetect(result);
+                if (de.result != null)
+                    ShowDetectInfo(de);
             }
         }
         photo.gameObject.SetActive(true);
     }
 
-    private void ShowDetectInfo(JsonParse.FaceDetect de)
+    public float leftEyeCenter_x, leftEyeCenter_y;
+
+    private void ShowDetectInfo(JsonParse.TencentFaceDetect de)
     {
-        string genderMsg = FacialRecognition.Instance.GetGenderStr(de.face[0].gender);
-        string ageMsg = (de.face[0].age).ToString();
-        string scoreMsg = (de.face[0].beauty).ToString();
-        string expressionMsg = FacialRecognition.Instance.GetExpressionStr(de.face[0].expression);
-        string glassesMsg = (de.face[0].glasses).ToString();
+        JsonParse.TencentFaceDetect.Faces face = de.face[0];
+        string genderMsg = FacialRecognition.Instance.GetGenderStr(face.gender);
+        string ageMsg = (face.age).ToString();
+        string scoreMsg = (face.beauty).ToString();
+        string expressionMsg = FacialRecognition.Instance.GetExpressionStr(face.expression);
+        string glassesMsg = (face.glasses).ToString();
         string raceMsg = "null";
         SetInfoText(genderMsg, ageMsg, scoreMsg, expressionMsg, glassesMsg, raceMsg);
     }
 
-    private void ShowDetectInfo(JObject info)
-    {
-        if (info == null || info["result"].ToString() == string.Empty)
-            return;
-        var r = info["result"]["face_list"];
-        foreach (var value in r)
-        {
-            var age = value["age"];
-            var gender = value["gender"]["type"];
-            var score = value["beauty"];
-            var expression = value["expression"]["type"];
-            var glasses = value["glasses"]["type"];
-            var race = value["race"]["type"];
-            string genderMsg = gender.ToString() == "male" ? "男" : "女";
-            string ageMsg = age.ToString();
-            string scoreMsg = ((int)(float.Parse(score.ToString()))).ToString();
-            string expressionMsg = FaceDetector.Instance.GetExpressionStr(expression.ToString());
-            string glassesMsg = FaceDetector.Instance.GetGlassStr(glasses.ToString());
-            string raceMsg = FaceDetector.Instance.GetRaceStr(race.ToString());
+    public RawImage tImg;
 
-            SetInfoText(genderMsg, ageMsg, scoreMsg, expressionMsg, glassesMsg, raceMsg);
-        }
+    private Vector3 GetWorldPos(float x,float y)
+    {
+        Vector3 pos = mCamera.ViewportToWorldPoint(new Vector3(x, y, mCamera.nearClipPlane));
+        return new Vector3(pos.x, pos.y, 0); 
+    }
+
+    private void ShowDetectInfo(JsonParse.BaiduFaceDectect de)
+    {
+        JsonParse.BaiduFaceDectect.Result.Face_list face = de.result.face_list[0];
+        leftEyeCenter_x = (float)face.landmark[0].x;
+        Debug.Log(leftEyeCenter_x);
+        leftEyeCenter_y = (float)face.landmark[0].y;
+        Debug.Log(leftEyeCenter_y);
+        tImg.transform.position = GetWorldPos(leftEyeCenter_x, leftEyeCenter_y);
+
+        string genderMsg = face.gender.type == "male" ? "男" : "女";
+        string ageMsg = face.age.ToString();
+        string scoreMsg = face.beauty.ToString();
+        string expressionMsg = FaceDetector.Instance.GetExpressionStr(face.expression.type);
+        string glassesMsg = FaceDetector.Instance.GetGlassStr(face.glasses.type);
+        string raceMsg = FaceDetector.Instance.GetRaceStr(face.race.type);
+        SetInfoText(genderMsg, ageMsg, scoreMsg, expressionMsg, glassesMsg, raceMsg);
     }
 
     private void SetInfoText(string gender,string age,string score,string expression,string glasses,string race)
     {
-        genderText.text = StringUtil.SetStringColor("性别", STRING_COLOR.Red) + StringUtil.SetStringColor(gender, STRING_COLOR.White);
+        genderText.text = StringUtil.SetStringColor("性别", STRING_COLOR.Red) + StringUtil.SetStringColor(gender, STRING_COLOR.Blue);
         ageText.text = StringUtil.SetStringColor("年龄", STRING_COLOR.Red) + StringUtil.SetStringColor(age, STRING_COLOR.Yellow);
         scoreText.text = StringUtil.SetStringColor("颜值", STRING_COLOR.Red) + StringUtil.SetStringColor(score, STRING_COLOR.Yellow);
         expressionText.text = StringUtil.SetStringColor("表情", STRING_COLOR.Red) + StringUtil.SetStringColor(expression, STRING_COLOR.Yellow);
@@ -529,5 +503,32 @@ public class GetCamera : MonoBehaviour
     public static int IndexSort(Texture2D a,Texture2D b)
     {
         return string.Compare(b.name, a.name);
+    }
+
+    private void OnDestroy()
+    {
+        camTexture = null;
+    }
+
+    private bool isShowGUI;
+    Vector3 screenPosition;
+    Vector3 mousePositionOnScreen;
+    Vector3 mousePositionInWorld;
+    private void OnGUI()
+    {
+        if (!isShowGUI)
+            return;
+        //获取鼠标在场景中坐标
+        mousePositionOnScreen = Input.mousePosition;
+        //让场景中的Z=鼠标坐标的Z
+        mousePositionOnScreen.z = 0;
+        //将相机中的坐标转化为世界坐标
+        mousePositionInWorld = Camera.main.ScreenToWorldPoint(mousePositionOnScreen);
+
+        GUIStyle s = new GUIStyle();
+        s.fontSize = 50;
+        s.normal.textColor = Color.white;
+        GUI.Label(new Rect(50, 50, 100, 100), mousePositionOnScreen.ToString(), s);
+        GUI.Label(new Rect(50, 150, 100, 100), mousePositionInWorld.ToString(), s);
     }
 }
