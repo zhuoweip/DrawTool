@@ -61,6 +61,7 @@ public class GetCamera : MonoBehaviour
     void Start()
     {
         InitData();
+        InitWebCam();
     }
 
     public void Update()
@@ -112,6 +113,11 @@ public class GetCamera : MonoBehaviour
         for (int i = 0; i < count; i++)
             Tpool.OnActiveGameObject(pQueue);
 
+        RegistBtn();
+    }
+
+    public void InitWebCam()
+    {
         // 设备不同的坐标转换
 #if UNITY_IOS || UNITY_IPHONE
         img.transform.Rotate (new Vector3 (0, 180, 90));
@@ -127,8 +133,6 @@ public class GetCamera : MonoBehaviour
         {
             //无摄像头或者手动关闭摄像头
         }
-       
-        RegistBtn();
     }
 
     private void RegistBtn()
@@ -173,8 +177,6 @@ public class GetCamera : MonoBehaviour
     //拍照
     public void TakePhoto()
     {
-        Timing.Instance.Ztime();
-
         if (!Isget)
         {
             Isget = true;
@@ -191,8 +193,6 @@ public class GetCamera : MonoBehaviour
     //重新截图
     public void ReGet()
     {
-        Timing.Instance.Ztime();
-
         if (Isget)
         {
             Isget = false;
@@ -203,7 +203,6 @@ public class GetCamera : MonoBehaviour
     //上传留言
     public void Save()
     {
-        Timing.Instance.Ztime();
         v1 = mCamera.WorldToScreenPoint(startPoint.position);
         v2 = mCamera.WorldToScreenPoint(endPoint.position);
         w = int.Parse(Mathf.Abs(v1.x - v2.x).ToString("F0"));
@@ -427,8 +426,6 @@ public class GetCamera : MonoBehaviour
     public void ImgGet()
     {
         float t = Time.realtimeSinceStartup;
-
-        Timing.Instance.Stop();
         //cameraImage.gameObject.SetActive(false);
         reviewMsgUI.SetActive(true);
         drawManager.isForbid = true;
@@ -441,8 +438,6 @@ public class GetCamera : MonoBehaviour
                 LoadAllPicture();
             else
                 StartCoroutine(LoadWWWAllPicture());
-            if (allTex2d.Count == 0)
-                return;
         }
 
         allTex2d.Sort(IndexSort);
@@ -451,53 +446,56 @@ public class GetCamera : MonoBehaviour
         //Debug.LogError(t1);
         t = Time.realtimeSinceStartup;
 
-        Transform topTrans = reviewMsgUI.transform.Find("Top").transform;
-
-        Vector3 startpos = topTrans.localPosition + new Vector3(-610, 270);
-        suncount = allTex2d.Count / 3;
-        int count = allTex2d.Count;
-        if (count < minCount)
+        if (allTex2d.Count > 0)
         {
-            count = minCount;
-            suncount = count / 3;
-        }
+            Transform topTrans = reviewMsgUI.transform.Find("Top").transform;
 
-        //Debug.Log(pPool.GetActiveObjectCount());
-        for (int i = 0; i < Tpool.GetActiveObjectCount(); i++)
-        {
-            GameObjData objData = Tpool.GetActiveObject(i);
-            GameObject obj = objData.gameObject;
-            //obj.name = "item" + i;
-            if (!obj.GetComponent<RawImage>())
-                obj.AddComponent<RawImage>();
-            obj.transform.SetParent(topTrans, false);
-            obj.transform.localScale = Vector3.one;
-            obj.transform.localPosition = Vector3.zero;
-            if (!obj.GetComponent<ImageMove>())
-                obj.AddComponent<ImageMove>();
-
-            if (i - lastCount > allTex2d.Count - 1)
+            Vector3 startpos = topTrans.localPosition + new Vector3(-610, 270);
+            suncount = allTex2d.Count / 3;
+            int count = allTex2d.Count;
+            if (count < minCount)
             {
-                lastCount = i;
+                count = minCount;
+                suncount = count / 3;
             }
-            //最近的图片在最前
-            Texture2D tmp = allTex2d[i - lastCount];//allTex2d[i > allTex2d.Count - 1 ? UnityEngine.Random.Range(0, allTex2d.Count) : i]; //allTex2d[i];
-            tmp.filterMode = FilterMode.Point;
 
-            obj.GetComponent<RawImage>().texture = tmp;
-            obj.GetComponent<RectTransform>().sizeDelta = new Vector3(1296, 864);
-            obj.GetComponent<RectTransform>().localScale = new Vector3(0.3f, 0.3f);
-            if (i / 3 != index)
+            //Debug.Log(pPool.GetActiveObjectCount());
+            for (int i = 0; i < Tpool.GetActiveObjectCount(); i++)
             {
-                index = i / 3;
-                startpos = topTrans.localPosition + new Vector3(-610 + index * 416, 270);
-            }
-            obj.transform.localPosition = startpos;
-            startpos = startpos + new Vector3(0, -274);
-        }
+                GameObjData objData = Tpool.GetActiveObject(i);
+                GameObject obj = objData.gameObject;
+                //obj.name = "item" + i;
+                if (!obj.GetComponent<RawImage>())
+                    obj.AddComponent<RawImage>();
+                obj.transform.SetParent(topTrans, false);
+                obj.transform.localScale = Vector3.one;
+                obj.transform.localPosition = Vector3.zero;
+                if (!obj.GetComponent<ImageMove>())
+                    obj.AddComponent<ImageMove>();
 
-        float t2 = Time.realtimeSinceStartup - t;
-        //Debug.LogError(t2);
+                if (i - lastCount > allTex2d.Count - 1)
+                {
+                    lastCount = i;
+                }
+                //最近的图片在最前
+                Texture2D tmp = allTex2d[i - lastCount];//allTex2d[i > allTex2d.Count - 1 ? UnityEngine.Random.Range(0, allTex2d.Count) : i]; //allTex2d[i];
+                tmp.filterMode = FilterMode.Point;
+
+                obj.GetComponent<RawImage>().texture = tmp;
+                obj.GetComponent<RectTransform>().sizeDelta = new Vector3(1296, 864);
+                obj.GetComponent<RectTransform>().localScale = new Vector3(0.3f, 0.3f);
+                if (i / 3 != index)
+                {
+                    index = i / 3;
+                    startpos = topTrans.localPosition + new Vector3(-610 + index * 416, 270);
+                }
+                obj.transform.localPosition = startpos;
+                startpos = startpos + new Vector3(0, -274);
+            }
+
+            float t2 = Time.realtimeSinceStartup - t;
+            //Debug.LogError(t2);
+        }
     }
 
     public static int IndexSort(Texture2D a,Texture2D b)
