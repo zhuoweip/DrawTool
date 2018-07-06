@@ -19,6 +19,31 @@ public class JsonParse
         }
     }
 
+    public class BaiduFaceList
+    {
+        public static BaiduFaceList ParseJsonFaceList(string json)
+        {
+            return LitJson.JsonMapper.ToObject<BaiduFaceList>(json);
+        }
+
+        public int error_code { get; set; }
+        public string error_msg { get; set; }
+        public System.Int64 log_id { get; set; }
+        public int timestamp { get; set; }
+        public int cached { get; set; }
+        public Result result { get; set; }
+
+        public class Result
+        {
+            public Face_list[] face_list { get; set; }
+            public class Face_list
+            {
+                public string face_token { get; set; }
+                public string ctime { get; set; }
+            }
+        }
+    }
+
     public class BaiduFaceDectect
     {
         public static BaiduFaceDectect ParseJsonFaceDetect(string json)

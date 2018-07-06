@@ -7,7 +7,6 @@ using System;
 
 public class FacialRecognition : MonoSingleton<FacialRecognition>
 {
-    // 设置为你自己的密钥对
     string appid = "10139240";//"10126488";
     string secretId = "AKIDb7SddShau31oaBgquoW3PaaP3WovAjWF";//"AKID1qSt9Cce18zbyAHnFRN4ZppNjrk0hsTu";
     string secretKey = "mT4ZyIWfifXJzhLtLgv597zlPtBJG3f5";//"PceU9anlV1JNErGRN6btwmNktnTxDDzW";

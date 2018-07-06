@@ -1,43 +1,20 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using Baidu.Aip.Face;
-using UnityEngine.UI;
-using System.Net;
-using System.IO;
+﻿using DevelopEngine;
 using Newtonsoft.Json.Linq;
 using System;
-using DevelopEngine;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+using UnityEngine.UI;
 
 //参考演示demo,用的是旧的sdk
 //http://www.manew.com/forum.php?mod=viewthread&tid=109347 
 //https://blog.csdn.net/dark00800/article/details/78191431
 
-public enum ImgType
+public class FaceDetector : MonoSingleton<FaceDetector>
 {
-    /// <summary>
-    /// 图片的base64值
-    /// </summary>
-    BASE64 = 1,
-    /// <summary>
-    /// 图片的 URL地址
-    /// </summary>
-    URL,
-    /// <summary>
-    /// 人脸图片的唯一标识
-    /// </summary>
-    FACE_TOKEN
-}
-
-public class FaceDetector : MonoSingleton<FaceDetector> {
-
-    private Face client;                                        // 用来调用百度AI接口
-    string APIKey = "B6ZGNfAXbfvdV2xo0vYox4lQ";                  
-    string SecretKey = "glrXsvIKb8cESeyAooRSgR7dk1QmEqgg";       
-
-    private Dictionary<string, object> options;                 // 返回的数据
-    private string imageType = Enum.GetName(typeof(ImgType),1);                        // 图片类型
-    private JObject result;                                     // 接收返回的结果
+    string APPID = "11450771";
+    string APIKey = "B6ZGNfAXbfvdV2xo0vYox4lQ";
+    string SecretKey = "glrXsvIKb8cESeyAooRSgR7dk1QmEqgg";
 
     private void Awake()
     {
@@ -49,33 +26,21 @@ public class FaceDetector : MonoSingleton<FaceDetector> {
                    return true; // **** Always accept
                };
 
-        client = new Face(APIKey, SecretKey);
-        options = new Dictionary<string, object>()
-        {
-            {"face_field", "age,beauty,expression,faceshape,gender,glasses,landmark,race,quality,facetype"},
-            {"max_face_num", 1},
-            {"face_type", "LIVE"}
-        };
+        Cf.Instance().setAppInfo(APIKey, SecretKey);
     }
 
     public void DetectLocalImg(string imgName)
     {
-        byte[] image = File.ReadAllBytes(Application.streamingAssetsPath + "/" + imgName + ".jpg");
-        FaceDetect(image);
+        byte[] bytes = File.ReadAllBytes(Application.streamingAssetsPath + "/" + imgName + ".jpg");
+        FaceDetect(bytes);
     }
 
-    private string GetImgStr(byte[] bytes)
-    {
-        return System.Convert.ToBase64String(bytes);
-    }
-
-    public JObject FaceDetect(byte[] img)
+    /// <summary>人脸检测</summary>
+    public JObject FaceDetect(byte[] bytes)
     {
         try
         {
-            result = client.Detect(GetImgStr(img), imageType, options);
-            return result;
-            //ReDrawDetectImg(result);
+            return BaiDu.detectface(bytes);
         }
         catch (Exception e)
         {
@@ -84,11 +49,85 @@ public class FaceDetector : MonoSingleton<FaceDetector> {
         }
     }
 
-    /// <summary>
-    /// 根据检测点重绘图像
-    /// </summary>
-    /// <param name="result"></param>
-    private void ReDrawDetectImg(JObject result,RawImage rImg, Texture2D texture)
+    /// <summary>注册用户组</summary>
+    public void FaceCreatGroup()
+    {
+        try
+        {
+            BaiDu.creatgroup();
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    /// <summary>获取用户组</summary>
+    public void GetGroupList()
+    {
+        try
+        {
+            BaiDu.getgrouplist();
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    /// <summary>注册用户</summary>
+    public void SignUpNewPerson(byte[] bytes)
+    {
+        try
+        {
+            BaiDu.addface(bytes);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    /// <summary>获取用户列表</summary>
+    public JObject GetFaceList()
+    {
+        try
+        {
+            return BaiDu.getfacelist();
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    /// <summary>对比人脸库</summary>
+    public bool FaceMatch(byte[] bytes)
+    {
+        JsonParse.BaiduFaceList.Result result = JsonParse.BaiduFaceList.ParseJsonFaceList(GetFaceList().ToString()).result;
+        List<string> tokenList = new List<string>();
+
+        for (int i = 0; i < result.face_list.Length; i++)
+        {
+            tokenList.Add(result.face_list[i].face_token);
+        }
+        try
+        {
+            for (int j = 0; j < tokenList.Count; j++)
+            {
+                if (BaiDu.facecompare(bytes, tokenList[j]))
+                    return true;
+            }
+            return false;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    /// <summary>根据检测点重绘图像</summary>
+    public void ReDrawDetectImg(JObject result, RawImage rImg, Texture2D texture)
     {
         var width = texture.width;
         var height = texture.height;
@@ -122,7 +161,6 @@ public class FaceDetector : MonoSingleton<FaceDetector> {
     }
 
     #region 获取信息
-
     public string GetExpressionStr(string expressionStr)
     {
         string expressionType = string.Empty;
@@ -160,6 +198,5 @@ public class FaceDetector : MonoSingleton<FaceDetector> {
             glasstype = "墨镜";
         return glasstype;
     }
-
     #endregion
 }

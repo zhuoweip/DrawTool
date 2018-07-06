@@ -5,6 +5,7 @@ using System.Net;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json.Linq;
 
 namespace SCY
 {
@@ -25,6 +26,10 @@ namespace SCY
 
         public static string ByteArrToStr64(byte[] bytes){
             return System.Convert.ToBase64String(bytes);
+        }
+
+        public static decimal JTokenToDecimal(JToken jtoken){
+            return System.Convert.ToDecimal(jtoken);
         }
 
         //public static Bitmap GetWebImage(string url)

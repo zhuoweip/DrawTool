@@ -84,6 +84,13 @@ public class GetCamera : MonoBehaviour
             RetakePhoto(); 
         }
 
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            //FaceDetector.Instance.FaceCreatGroup();
+            byte[] bytes = GetPhotoPixel(camTexture); 
+            Debug.Log(FaceDetector.Instance.FaceMatch(bytes));
+        }
+
         if (isOpenAI && camTexture != null)
         {
             //GetPhotoPixel(camTexture);
@@ -340,7 +347,7 @@ public class GetCamera : MonoBehaviour
         if (isOpenAI && TcpManager.IsOnLine())//在线检测
         {
             result = AIManager.Instance.AIFaceDetect(bytes);
-            Debug.Log(result);
+            //Debug.Log(result);
             if (AIManager.Instance.type == AIType.Tencent)
             {
                 JsonParse.TencentFaceDetect de = JsonParse.TencentFaceDetect.ParseJsonFaceDetect(result);
@@ -353,6 +360,7 @@ public class GetCamera : MonoBehaviour
                 JsonParse.BaiduFaceDectect de = JsonParse.BaiduFaceDectect.ParseJsonFaceDetect(result);
                 if (de.result != null)
                     ShowDetectInfo(de);
+                //FaceDetector.Instance.SignUpNewPerson(bytes);
             }
         }
         photo.gameObject.SetActive(true);
@@ -384,11 +392,12 @@ public class GetCamera : MonoBehaviour
     {
         JsonParse.BaiduFaceDectect.Result.Face_list face = de.result.face_list[0];
         leftEyeCenter_x = (float)face.landmark[0].x;
-        Debug.Log(leftEyeCenter_x);
+        //Debug.Log(leftEyeCenter_x);
         leftEyeCenter_y = (float)face.landmark[0].y;
-        Debug.Log(leftEyeCenter_y);
+        //Debug.Log(leftEyeCenter_y);
         tImg.transform.position = GetWorldPos(leftEyeCenter_x, leftEyeCenter_y);
 
+        Debug.Log(face.face_token);
         string genderMsg = face.gender.type == "male" ? "男" : "女";
         string ageMsg = face.age.ToString();
         string scoreMsg = face.beauty.ToString();
