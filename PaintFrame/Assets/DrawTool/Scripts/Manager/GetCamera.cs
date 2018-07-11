@@ -39,6 +39,9 @@ public class GetCamera : MonoBehaviour
     private JObject detectInfo;
     private string result;
 
+    private int width = 640;
+    private int height = 480;
+
     public QR_Code qr;
     private DrawManager drawManager;
     private int maxDay;
@@ -87,8 +90,8 @@ public class GetCamera : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Q))
         {
             //FaceDetector.Instance.FaceCreatGroup();
-            byte[] bytes = GetPhotoPixel(camTexture); 
-            Debug.Log(FaceDetector.Instance.FaceMatch(bytes));
+            //byte[] bytes = GetPhotoPixel(camTexture); 
+            //Debug.Log(FaceDetector.Instance.FaceMatch(bytes));
         }
 
         if (isOpenAI && camTexture != null)
@@ -97,10 +100,6 @@ public class GetCamera : MonoBehaviour
             //FacialRecognition.Instance.FaceTracking(GetPhotoPixel(camTexture));
             //FaceDetector.Instance.FaceDetect(GetPhotoPixel(camTexture));
         }
-
-        //Vector3 pos = tImg.transform.position;
-        //Debug.Log(mCamera.WorldToScreenPoint(new Vector3(pos.x, pos.y, 0)));
-        //Debug.Log(tImg.transform.position);
     }
 
     [HideInInspector]
@@ -367,6 +366,7 @@ public class GetCamera : MonoBehaviour
     }
 
     public float leftEyeCenter_x, leftEyeCenter_y;
+    private float faceWidth, faceHeight;
 
     private void ShowDetectInfo(JsonParse.TencentFaceDetect de)
     {
@@ -381,12 +381,7 @@ public class GetCamera : MonoBehaviour
     }
 
     public RawImage tImg;
-
-    private Vector3 GetWorldPos(float x,float y)
-    {
-        Vector3 pos = mCamera.ViewportToWorldPoint(new Vector3(x, y, mCamera.nearClipPlane));
-        return new Vector3(pos.x, pos.y, 0); 
-    }
+    public GameObject cube;
 
     private void ShowDetectInfo(JsonParse.BaiduFaceDectect de)
     {
@@ -394,8 +389,14 @@ public class GetCamera : MonoBehaviour
         leftEyeCenter_x = (float)face.landmark[0].x;
         //Debug.Log(leftEyeCenter_x);
         leftEyeCenter_y = (float)face.landmark[0].y;
+        faceWidth = (float)face.location.width;
+        faceHeight = (float)face.location.height;
+
+        var x = leftEyeCenter_x + (faceWidth / 2);
+        var y = leftEyeCenter_y + (faceHeight / 2);
+
         //Debug.Log(leftEyeCenter_y);
-        tImg.transform.position = GetWorldPos(leftEyeCenter_x, leftEyeCenter_y);
+        cube.transform.localPosition = GetWorldPos(new Vector2(x,y));
 
         Debug.Log(face.face_token);
         string genderMsg = face.gender.type == "male" ? "男" : "女";
@@ -517,8 +518,18 @@ public class GetCamera : MonoBehaviour
         camTexture = null;
     }
 
+    private Vector3 GetWorldPos(Vector2 v2)
+    {
+        v2.x = v2.x * Screen.width / width;
+        v2.y = v2.y * Screen.height / height;
+
+        Vector3 v3 = mCamera.ScreenToWorldPoint(v2);
+        v3.y *= -1;
+        v3.z = 0;
+        return v3;
+    }
+
     private bool isShowGUI;
-    Vector3 screenPosition;
     Vector3 mousePositionOnScreen;
     Vector3 mousePositionInWorld;
     private void OnGUI()

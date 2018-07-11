@@ -61,6 +61,86 @@ public class DrawManager : MonoBehaviour
         /*---关闭区域选择的方式，用模板测试的方法来做，更流畅------------------------------------------------*/
         Draw();
 
+        if (Input.GetKeyDown(KeyCode.Keypad1))
+        {
+            CreatPoints();
+        }
+
+    }
+
+    private void CreatPoints()
+    {
+        //LineRenderer lr = currentLine.lineRenderer;
+        //for (int i = 0; i < lr.positionCount; i++)
+        //{
+        //    GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        //    go.name = i.ToString();
+        //    go.transform.SetParent(lr.transform);
+        //    Vector3 pos = lr.GetPosition(i);
+        //    go.transform.localPosition = new Vector3(pos.x, pos.y, 0);
+        //    go.transform.localScale = Vector3.one * 0.5f;
+        //    go.layer = lr.gameObject.layer;
+        //}
+        GetBreakPoints();
+
+    }
+
+    private void GetBreakPoints()
+    {
+        int count = history.GetPoolSize();
+        if (count >= 2)
+        {
+            for (int i = 0; i < history.GetPoolSize(); i++)
+            {
+                LineRenderer lr = history.GetPool()[i].lineRender;
+                if (i >= 1)
+                {
+                    LineRenderer lastLr = history.GetPool()[i - 1].lineRender;
+                    lr.SetPosition(0, lastLr.GetPosition(lastLr.positionCount - 1));
+                    SetAnimationCurve(lastLr, 1, 0);
+                    SetAnimationCurve(lr, 0, 1);
+                }
+            }
+        }
+
+        
+
+        //Vector3 originalPos = lr.GetPosition(0);
+        //Vector3 pos;
+        //int index = 0;
+        //do
+        //{
+        //    index++;
+        //    pos = lr.GetPosition(index);
+        //}
+        //while (pos == originalPos);
+        //pos = lr.GetPosition(index);
+
+        //Vector3 targetDir = (pos - originalPos).normalized;
+        //Debug.Log(targetDir);
+        //for (int i = 0; i < lr.positionCount; i++)
+        //{
+        //    Vector3 dir = (lr.GetPosition(i) - lr.GetPosition(0)).normalized;
+        //    //Debug.Log("dir = " + dir);
+        //    float angle = Vector3.Angle(targetDir,dir);
+        //    Debug.Log(i + "  angle  = " + angle);
+        //}
+    }
+
+    private void SetAnimationCurve(LineRenderer lr,int startKey,int lastKey)
+    {
+        AnimationCurve curve = new AnimationCurve();
+        curve.AddKey(0, startKey);
+        curve.AddKey(1, lastKey);
+        //for (int i = 0; i < curve.keys.Length; i++)
+        //{
+        //    Keyframe k = new Keyframe();
+        //    k.tangentMode = 1;
+        //    k.time = curve.keys[i].time;
+        //    k.value = curve.keys[i].value;
+        //    curve.MoveKey(i, k);
+        //}
+        lr.widthCurve = curve;
     }
 
     private void Draw()
@@ -346,6 +426,7 @@ public class DrawManager : MonoBehaviour
         element.transform = go.transform;
         element.type = History.Element.EType.Object;
         element.sortingOrder = currentSortingOrder;
+        element.lineRender = currentLine.lineRenderer;
         history.AddToPool(element);
     }
     #endregion

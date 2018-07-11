@@ -158,6 +158,11 @@ public class History : MonoBehaviour
         return null;
     }
 
+    public List<Element> GetPool()
+    {
+        return pool;
+    }
+
     /// <summary>
     /// Returns the size of the pool.
     /// </summary>
@@ -290,6 +295,7 @@ public class History : MonoBehaviour
         public Transform transform;
         public Color color;
         public int sortingOrder;
+        public LineRenderer lineRender;
 
         public enum EType
         {

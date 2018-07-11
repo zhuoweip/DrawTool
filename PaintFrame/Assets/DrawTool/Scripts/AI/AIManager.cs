@@ -2,7 +2,7 @@
 
 public class AIManager : MonoSingleton<AIManager> {
 
-    public AIType type = AIType.Tencent;
+    public AIType type = AIType.BaiDu;
     [EnumLabel("模板类型")]
     public Template template = Template.cf_yuren_guangtou;
 
