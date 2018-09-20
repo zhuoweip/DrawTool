@@ -27,6 +27,7 @@ public class ToolEditor : EditorWindow
     private bool Erase = false;
     private bool Crayon = false;
     private bool Gradient = false;
+    private bool Brush = false;
     private bool Paint = false;
     private bool Spark = false;
     private bool Stamp = false;
@@ -98,6 +99,7 @@ public class ToolEditor : EditorWindow
         Erase = EditorGUILayout.Toggle("橡皮擦", Erase);
         Crayon = EditorGUILayout.Toggle("蜡笔", Crayon);
         Gradient = EditorGUILayout.Toggle("渐变笔", Gradient);
+        Brush = EditorGUILayout.Toggle("刷子", Brush);
         Paint = EditorGUILayout.Toggle("油画笔", Paint);
         Spark = EditorGUILayout.Toggle("喷漆", Spark);
         Stamp = EditorGUILayout.Toggle("印记", Stamp);
@@ -130,6 +132,7 @@ public class ToolEditor : EditorWindow
         CreatTool(ref Erase, ref isChooseErase, ref eraseStr, ref tErase);
         CreatTool(ref Crayon, ref isChooseCrayon, ref crayonStr, ref tCrayon);
         CreatTool(ref Gradient, ref isChooseGradient, ref gradientStr, ref tGradient);
+        CreatTool(ref Brush, ref isChooseBrush, ref brushStr, ref tBrush);
         CreatTool(ref Paint, ref isChoosePaint, ref paintStr, ref tPaint);
         CreatTool(ref Spark, ref isChooseSpark, ref sparkStr, ref tSpark);
         CreatTool(ref Stamp, ref isChooseStamp, ref stampStr, ref tStamp);
@@ -153,6 +156,7 @@ public class ToolEditor : EditorWindow
     private string pencilStr = "Pencil";
     private string crayonStr = "Crayon";
     private string gradientStr = "Gradient";
+    private string brushStr = "Brush";
     private string paintStr = "Paint";
     private string sparkStr = "Spark";
     private string stampStr = "Stamp";
@@ -173,6 +177,7 @@ public class ToolEditor : EditorWindow
     private bool isChooseErase;
     private bool isChooseCrayon;
     private bool isChooseGradient;
+    private bool isChooseBrush;
     private bool isChoosePaint;
     private bool isChooseSpark;
     private bool isChooseStamp;
@@ -193,6 +198,7 @@ public class ToolEditor : EditorWindow
     GameObject tErase;
     GameObject tCrayon;
     GameObject tGradient;
+    GameObject tBrush;
     GameObject tPaint;
     GameObject tSpark;
     GameObject tStamp;

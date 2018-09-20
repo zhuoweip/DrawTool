@@ -65,82 +65,6 @@ public class DrawManager : MonoBehaviour
         {
             CreatPoints();
         }
-
-    }
-
-    private void CreatPoints()
-    {
-        //LineRenderer lr = currentLine.lineRenderer;
-        //for (int i = 0; i < lr.positionCount; i++)
-        //{
-        //    GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        //    go.name = i.ToString();
-        //    go.transform.SetParent(lr.transform);
-        //    Vector3 pos = lr.GetPosition(i);
-        //    go.transform.localPosition = new Vector3(pos.x, pos.y, 0);
-        //    go.transform.localScale = Vector3.one * 0.5f;
-        //    go.layer = lr.gameObject.layer;
-        //}
-        GetBreakPoints();
-
-    }
-
-    private void GetBreakPoints()
-    {
-        int count = history.GetPoolSize();
-        if (count >= 2)
-        {
-            for (int i = 0; i < history.GetPoolSize(); i++)
-            {
-                LineRenderer lr = history.GetPool()[i].lineRender;
-                if (i >= 1)
-                {
-                    LineRenderer lastLr = history.GetPool()[i - 1].lineRender;
-                    lr.SetPosition(0, lastLr.GetPosition(lastLr.positionCount - 1));
-                    SetAnimationCurve(lastLr, 1, 0);
-                    SetAnimationCurve(lr, 0, 1);
-                }
-            }
-        }
-
-        
-
-        //Vector3 originalPos = lr.GetPosition(0);
-        //Vector3 pos;
-        //int index = 0;
-        //do
-        //{
-        //    index++;
-        //    pos = lr.GetPosition(index);
-        //}
-        //while (pos == originalPos);
-        //pos = lr.GetPosition(index);
-
-        //Vector3 targetDir = (pos - originalPos).normalized;
-        //Debug.Log(targetDir);
-        //for (int i = 0; i < lr.positionCount; i++)
-        //{
-        //    Vector3 dir = (lr.GetPosition(i) - lr.GetPosition(0)).normalized;
-        //    //Debug.Log("dir = " + dir);
-        //    float angle = Vector3.Angle(targetDir,dir);
-        //    Debug.Log(i + "  angle  = " + angle);
-        //}
-    }
-
-    private void SetAnimationCurve(LineRenderer lr,int startKey,int lastKey)
-    {
-        AnimationCurve curve = new AnimationCurve();
-        curve.AddKey(0, startKey);
-        curve.AddKey(1, lastKey);
-        //for (int i = 0; i < curve.keys.Length; i++)
-        //{
-        //    Keyframe k = new Keyframe();
-        //    k.tangentMode = 1;
-        //    k.time = curve.keys[i].time;
-        //    k.value = curve.keys[i].value;
-        //    curve.MoveKey(i, k);
-        //}
-        lr.widthCurve = curve;
     }
 
     private void Draw()
@@ -223,6 +147,7 @@ public class DrawManager : MonoBehaviour
         currentLine.material.mainTexture = currentTool.texture;
         currentLine.SetWidth(currentTool.width, currentTool.width);
         currentLine.SetColor(currentTool.color);
+        currentLine.SetNumCapVertices(currentTool.endCapVertices);
         currentLine.lineRenderer.textureMode = currentTool.textureMode;
         currentLine.createPaintLines = currentTool.creatPaintLine;
 
@@ -328,6 +253,59 @@ public class DrawManager : MonoBehaviour
                 break;
             }
         }
+    }
+
+    private void CreatPoints()
+    {
+        #region creat visual points
+        //LineRenderer lr = currentLine.lineRenderer;
+        //for (int i = 0; i < lr.positionCount; i++)
+        //{
+        //    GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        //    go.name = i.ToString();
+        //    go.transform.SetParent(lr.transform);
+        //    Vector3 pos = lr.GetPosition(i);
+        //    go.transform.localPosition = new Vector3(pos.x, pos.y, 0);
+        //    go.transform.localScale = Vector3.one * 0.5f;
+        //    go.layer = lr.gameObject.layer;
+        //}
+        #endregion
+        CreatTurningPoints();
+    }
+
+    private void CreatTurningPoints()
+    {
+        LineRenderer lr;
+        int count = history.GetPoolSize();
+        if (count >= 2)
+        {
+            for (int i = 0; i < history.GetPoolSize(); i++)
+            {
+                lr = history.GetPool()[i].lineRender;
+                if (i >= 1)
+                {
+                    LineRenderer lastLr = history.GetPool()[i - 1].lineRender;
+                    lr.SetPosition(0, lastLr.GetPosition(lastLr.positionCount - 1));
+                }
+                if (i % 2 == 0)
+                    SetAnimationCurve(lr, .5f, 0.2f);
+                else
+                    SetAnimationCurve(lr, 0.2f, .5f);
+            }
+        }
+        else
+        {
+            lr = currentLine.lineRenderer;
+            SetAnimationCurve(lr, .5f, 0.2f);
+        }
+    }
+
+    private void SetAnimationCurve(LineRenderer lr, float startKey, float lastKey)
+    {
+        AnimationCurve curve = new AnimationCurve();
+        curve.AddKey(0, startKey);
+        curve.AddKey(1, lastKey);
+        lr.widthCurve = curve;
     }
 
     #endregion
@@ -490,7 +468,7 @@ public class DrawManager : MonoBehaviour
     {
         if (spr == null)
             return;
-        Color color = spr.texture.GetPixel((int)spr.rect.x / 2, (int)spr.rect.y / 2);//取图片中间的颜色
+        Color color = spr.texture.GetPixel((int)spr.pivot.x / 2, (int)spr.pivot.y / 2);//取图片中间的颜色
         Gradient gradient = new Gradient();
         GradientColorKey[] gck = new GradientColorKey[2];
         gck[0].time = 0.0F;

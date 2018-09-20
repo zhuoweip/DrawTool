@@ -23,6 +23,11 @@ public class Tool:MonoBehaviour
     public ToolFeature toolFeature = ToolFeature.Line;
 
     /// <summary>
+    /// 圆角直角
+    /// </summary>
+    public int endCapVertices = 8;
+
+    /// <summary>
     /// 绘画模式：线条，填充，印记
     /// </summary>
     public enum ToolFeature

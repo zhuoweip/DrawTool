@@ -66,6 +66,11 @@ public class Line : MonoBehaviour
     public bool createPaintLines;
 
     /// <summary>
+    /// The end cap vertices of the line.
+    /// </summary>
+    public int numCapVertices;
+
+    /// <summary>
     /// The points of the line.
     /// </summary>
     [HideInInspector]
@@ -193,6 +198,21 @@ public class Line : MonoBehaviour
         }
 
         this.color = color;
+    }
+
+    /// <summary>
+    /// Set the endCapVertices.
+    /// </summary>
+    /// <param name="value">Value.</param>
+    public void SetNumCapVertices(int numCapVertices)
+    {
+
+        if (lineRenderer != null)
+        {
+            lineRenderer.numCapVertices = numCapVertices;
+        }
+
+        this.numCapVertices = numCapVertices;
     }
 
     /// <summary>
