@@ -247,7 +247,7 @@ public class GetCamera : MonoBehaviour
         LoadSinglePic(filename, picName);
         Tpool.OnActiveGameObject(pQueue);
 
-        qr.UpLoad(imagebytes, timestamp);
+        qr.UpLoad(imagebytes, timestamp,QR_Code.ServerType.CAN);
     }
 
     //加载单张本地图片
