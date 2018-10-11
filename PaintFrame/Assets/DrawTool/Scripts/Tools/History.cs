@@ -45,7 +45,7 @@ public class History : MonoBehaviour
             {
                 pool[pointer].transform.gameObject.SetActive(false);
             }
-            SetSortingOrder(pool[pointer].transform, pool[pointer].sortingOrder);
+            SetSortingOrder(pool[pointer].transform, pool[pointer].sortingOrder + 1);
         }
 
         pointer--;

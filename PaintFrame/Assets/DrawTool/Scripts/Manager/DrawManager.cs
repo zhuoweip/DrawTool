@@ -446,6 +446,7 @@ public class DrawManager : MonoBehaviour
     {
         cursor.GetComponent<SpriteRenderer>().sprite = tool.transform.GetComponent<Image>().sprite;
         currentTool = tool;
+        ChangeMaterialTexture(currentTool.texture);
     }
 
     public void Delete()
@@ -462,6 +463,13 @@ public class DrawManager : MonoBehaviour
     public void ChangeSize(Tool tool)
     {
         currentTool.width = tool.width;
+    }
+
+    public void ChangeMaterialTexture(Texture matTex)
+    {
+        if (matTex == null)
+            return;
+        currentTool.material.mainTexture = matTex;
     }
 
     public void ChangColor(Sprite spr)

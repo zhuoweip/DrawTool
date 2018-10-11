@@ -1,10 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.IO;
+using System;
+using System.Linq.Expressions;
 
 public static class Extension
 {
@@ -28,6 +29,7 @@ public class ToolEditor : EditorWindow
     private bool Crayon = false;
     private bool Gradient = false;
     private bool Brush = false;
+    private bool BrushPen = false;
     private bool Paint = false;
     private bool Spark = false;
     private bool Stamp = false;
@@ -50,7 +52,8 @@ public class ToolEditor : EditorWindow
     [MenuItem("DrawTool/ChooseTool")]
     static void Init()
     {
-        EditorWindow.GetWindow(typeof(ToolEditor));
+        ToolEditor window = (ToolEditor)EditorWindow.GetWindow(typeof(ToolEditor));
+        window.Show();
         GetParent();
     }
 
@@ -100,6 +103,7 @@ public class ToolEditor : EditorWindow
         Crayon = EditorGUILayout.Toggle("蜡笔", Crayon);
         Gradient = EditorGUILayout.Toggle("渐变笔", Gradient);
         Brush = EditorGUILayout.Toggle("刷子", Brush);
+        BrushPen = EditorGUILayout.Toggle("毛笔", BrushPen);
         Paint = EditorGUILayout.Toggle("油画笔", Paint);
         Spark = EditorGUILayout.Toggle("喷漆", Spark);
         Stamp = EditorGUILayout.Toggle("印记", Stamp);
@@ -123,113 +127,118 @@ public class ToolEditor : EditorWindow
         EditorGUILayout.EndToggleGroup();
 
         CreatAllTool();
-        DeleteAll();
+        //DeleteAll();
     }
 
     private void CreatAllTool()
     {
-        CreatTool(ref Pencil, ref isChoosePencil, ref pencilStr, ref tPencil);
-        CreatTool(ref Erase, ref isChooseErase, ref eraseStr, ref tErase);
-        CreatTool(ref Crayon, ref isChooseCrayon, ref crayonStr, ref tCrayon);
-        CreatTool(ref Gradient, ref isChooseGradient, ref gradientStr, ref tGradient);
-        CreatTool(ref Brush, ref isChooseBrush, ref brushStr, ref tBrush);
-        CreatTool(ref Paint, ref isChoosePaint, ref paintStr, ref tPaint);
-        CreatTool(ref Spark, ref isChooseSpark, ref sparkStr, ref tSpark);
-        CreatTool(ref Stamp, ref isChooseStamp, ref stampStr, ref tStamp);
-        CreatTool(ref PaintCollider, ref isChoosePaintCollider, ref paintColliderStr, ref tPaintCollider);
-        CreatTool(ref Delete, ref isChooseDelete, ref deleteStr, ref tDelete);
-        CreatTool(ref Size, ref isChooseSize, ref sizeStr, ref tSize);
-        CreatTool(ref Color, ref isChooseColor, ref colorStr, ref tColor);
-        CreatTool(ref ColorAtla, ref isChooseColorAtla, ref colorAtlaStr, ref tColorAtla);
-        CreatTool(ref Alpha, ref isChooseAlpha, ref alphaStr, ref tAlpha);
-        CreatTool(ref Recovery, ref isChooseRecovery, ref recoveryStr, ref tRecovery);
-        CreatTool(ref Zoom, ref isChooseZoom, ref zoomStr, ref tZoom);
-        CreatTool(ref TakePhoto, ref isChooseTakePhoto, ref takePhotoStr, ref tTakePhoto);
-        CreatTool(ref LeaveMsg, ref isChooseLeaveMsg, ref leaveMsgStr, ref tLeaveMsg);
-        CreatTool(ref ReviewMsg, ref isChooseReviewMsg, ref reviewMsgStr, ref tReviewMsg);
+        CreatTool(ref Pencil, ToolType.Pencil.ToString());
+        CreatTool(ref Erase, ToolType.Erase.ToString());
+        CreatTool(ref Crayon, ToolType.Crayon.ToString());
+        CreatTool(ref Gradient, ToolType.Gradient.ToString());
+        CreatTool(ref Brush, ToolType.Brush.ToString());
+        CreatTool(ref BrushPen, ToolType.BrushPen.ToString());
+        CreatTool(ref Paint, ToolType.Paint.ToString());
+        CreatTool(ref Spark, ToolType.Spark.ToString());
+        CreatTool(ref Stamp, ToolType.Stamp.ToString());
+        CreatTool(ref PaintCollider, ToolType.PaintCollider.ToString());
+        CreatTool(ref Delete, ToolType.Delete.ToString());
+        CreatTool(ref Size, ToolType.Size.ToString());
+        CreatTool(ref Color, ToolType.Color.ToString());
+        CreatTool(ref ColorAtla, ToolType.ColorAtla.ToString());
+        CreatTool(ref Alpha, ToolType.Alpha.ToString());
+        CreatTool(ref Recovery, ToolType.Recovery.ToString());
+        CreatTool(ref Zoom, ToolType.Zoom.ToString());
+        CreatTool(ref TakePhoto, ToolType.TakePhoto.ToString());
+        CreatTool(ref LeaveMsg, ToolType.LeaveMsg.ToString());
+        CreatTool(ref ReviewMsg, ToolType.ReviewMsg.ToString());
     }
-
 
     #region value
 
-    private string eraseStr = "Erase";
-    private string pencilStr = "Pencil";
-    private string crayonStr = "Crayon";
-    private string gradientStr = "Gradient";
-    private string brushStr = "Brush";
-    private string paintStr = "Paint";
-    private string sparkStr = "Spark";
-    private string stampStr = "Stamp";
-    private string paintColliderStr = "PaintCollider";
-    private string deleteStr = "Delete";
-    private string sizeStr = "Size";
-    private string colorStr = "Color";
-    private string colorAtlaStr = "ColorAtla";
-    private string alphaStr = "Alpha";
-    private string recoveryStr = "Recovery";
-    private string zoomStr = "Zoom";
-    private string takePhotoStr = "TakePhoto";
-    private string leaveMsgStr = "LeaveMsg";
-    private string reviewMsgStr = "ReviewMsg";
+    static Tuple<bool, GameObject> PencilTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> EraseTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> CrayonTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> GradientTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> BrushTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> BrushPenTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> PaintTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> SparkTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> StampTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> PaintColliderTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> DeleteTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> SizeTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> ColorTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> ColorAtlaTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> AlphaTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> RecoveryTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> ZoomTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> TakePhotoTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> LeaveMsgTuple = new Tuple<bool, GameObject>(false, null);
+    static Tuple<bool, GameObject> ReviewMsgTuple = new Tuple<bool, GameObject>(false, null);
 
 
-    private bool isChoosePencil;
-    private bool isChooseErase;
-    private bool isChooseCrayon;
-    private bool isChooseGradient;
-    private bool isChooseBrush;
-    private bool isChoosePaint;
-    private bool isChooseSpark;
-    private bool isChooseStamp;
-    private bool isChoosePaintCollider;
-    private bool isChooseDelete;
-    private bool isChooseSize;
-    private bool isChooseColor;
-    private bool isChooseColorAtla;
-    private bool isChooseAlpha;
-    private bool isChooseRecovery;
-    private bool isChooseZoom;
-    private bool isChooseTakePhoto;
-    private bool isChooseLeaveMsg;
-    private bool isChooseReviewMsg;
-
-
-    GameObject tPencil;
-    GameObject tErase;
-    GameObject tCrayon;
-    GameObject tGradient;
-    GameObject tBrush;
-    GameObject tPaint;
-    GameObject tSpark;
-    GameObject tStamp;
-    GameObject tPaintCollider;
-    GameObject tDelete;
-    GameObject tSize;
-    GameObject tColor;
-    GameObject tColorAtla;
-    GameObject tAlpha;
-    GameObject tRecovery;
-    GameObject tZoom;
-    GameObject tTakePhoto;
-    GameObject tLeaveMsg;
-    GameObject tReviewMsg;
-
-
+    public static Dictionary<string, Tuple<bool, GameObject>> dic = new Dictionary<string, Tuple<bool, GameObject>>()
+    {
+        {ToolType.Pencil.ToString(), PencilTuple},
+        {ToolType.Erase.ToString(), EraseTuple},
+        {ToolType.Crayon.ToString(), CrayonTuple},
+        {ToolType.Gradient.ToString(), GradientTuple},
+        {ToolType.Brush.ToString(), BrushTuple},
+        {ToolType.BrushPen.ToString(),BrushPenTuple},
+        {ToolType.Paint.ToString(), PaintTuple},
+        {ToolType.Spark.ToString(), SparkTuple},
+        {ToolType.Stamp.ToString(), StampTuple},
+        {ToolType.PaintCollider.ToString(), PaintColliderTuple},
+        {ToolType.Delete.ToString(), DeleteTuple},
+        {ToolType.Size.ToString(), SizeTuple},
+        {ToolType.Color.ToString(), ColorTuple},
+        {ToolType.ColorAtla.ToString(), ColorAtlaTuple},
+        {ToolType.Alpha.ToString(), AlphaTuple},
+        {ToolType.Recovery.ToString(), RecoveryTuple},
+        {ToolType.Zoom.ToString(), ZoomTuple},
+        {ToolType.TakePhoto.ToString(), TakePhotoTuple},
+        {ToolType.LeaveMsg.ToString(), LeaveMsgTuple},
+        {ToolType.ReviewMsg.ToString(), ReviewMsgTuple},
+    };
 
     #endregion
 
-    public void CreatTool(ref bool toggle, ref bool isChooseTool, ref string toolName, ref GameObject tempTool)
+    public enum ToolType
     {
-        if (toggle && !isChooseTool)
-        {
-            isChooseTool = !isChooseTool;
+        Pencil,
+        Erase,
+        Crayon,
+        Gradient,
+        Brush,
+        BrushPen,
+        Paint,
+        Spark,
+        Stamp,
+        PaintCollider,
+        Delete,
+        Size,
+        Color,
+        ColorAtla,
+        Alpha,
+        Recovery,
+        Zoom,
+        TakePhoto,
+        LeaveMsg,
+        ReviewMsg,
+    }
 
+    public void CreatTool(ref bool toggle, string toolName)
+    {
+        if (toggle && !dic[toolName].item1)
+        {
+            dic[toolName].item1 = !dic[toolName].item1;
             GetPrefabPath();//Project里面只能有一个Tool文件夹
             if (!string.IsNullOrEmpty(prefabPath))
             {
                 GameObject toolPrefab = AssetDatabase.LoadAssetAtPath(prefabPath + "/" + toolName + ".prefab", typeof(GameObject)) as GameObject;
                 GameObject tool = PrefabUtility.InstantiatePrefab(toolPrefab) as GameObject;
-                tempTool = tool;
+                dic[toolName].item2 = tool;
                 SetPrefabData(tool);
             }
             else
@@ -238,10 +247,10 @@ public class ToolEditor : EditorWindow
                 return;
             }
         }
-        else if (!toggle && isChooseTool)
+        else if (!toggle && dic[toolName].item1)
         {
-            isChooseTool = !isChooseTool;
-            DestroyImmediate(tempTool);
+            dic[toolName].item1 = !dic[toolName].item1;
+            DestroyImmediate(dic[toolName].item2);
         }
     }
 
@@ -256,7 +265,7 @@ public class ToolEditor : EditorWindow
     static void GetAllFiles(DirectoryInfo dir)
     {
         FileSystemInfo[] fileinfo = dir.GetFileSystemInfos();
-        foreach(FileSystemInfo i in fileinfo)
+        foreach (FileSystemInfo i in fileinfo)
         {
             if (i is DirectoryInfo)
             {
@@ -274,7 +283,7 @@ public class ToolEditor : EditorWindow
                     GetAllFiles((DirectoryInfo)i);
                 }
             }
-            else{}
+            else { }
         }
     }
 
@@ -313,17 +322,36 @@ public class ToolEditor : EditorWindow
     {
         if (parent == null)
             return;
-        go.transform.SetParent(parent); 
+        go.transform.SetParent(parent);
         go.layer = parent.gameObject.layer;
         go.transform.localPosition = Vector3.zero;
         go.transform.localScale = Vector3.one;
-        Image img = go.GetComponent<Image>(); 
+        Image img = go.GetComponent<Image>();
         if (img != null)
             img.SetNativeSize();
     }
 
     private void OnDestroy()
     {
-        //Debug.LogError("close");
+        PencilTuple.item1 = false;
+        EraseTuple.item1 = false;
+        CrayonTuple.item1 = false;
+        GradientTuple.item1 = false;
+        BrushTuple.item1 = false;
+        BrushPenTuple.item1 = false;
+        PaintTuple.item1 = false;
+        SparkTuple.item1 = false;
+        StampTuple.item1 = false;
+        PaintColliderTuple.item1 = false;
+        DeleteTuple.item1 = false;
+        SizeTuple.item1 = false;
+        ColorTuple.item1 = false;
+        ColorAtlaTuple.item1 = false;
+        AlphaTuple.item1 = false;
+        RecoveryTuple.item1 = false;
+        ZoomTuple.item1 = false;
+        TakePhotoTuple.item1 = false;
+        LeaveMsgTuple.item1 = false;
+        ReviewMsgTuple.item1 = false;
     }
 }
