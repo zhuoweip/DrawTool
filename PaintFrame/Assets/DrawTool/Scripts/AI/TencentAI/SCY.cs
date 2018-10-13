@@ -6,10 +6,10 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json.Linq;
+using System.Runtime.InteropServices;
 
 namespace SCY
 {
-
     public class Utility
     {
         public static Texture2D Base64Img(string Base64String)
@@ -119,6 +119,31 @@ namespace SCY
             WWW www = new WWW(bese64);
             yield return www;
             raw.texture = www.texture;
+        }
+
+        public static byte[] Color32ArrayToByteArray(Color[] colors)
+        {
+            if (colors == null || colors.Length == 0)
+                return null;
+
+            int lengthOfColor32 = Marshal.SizeOf(typeof(Color32));
+            int length = lengthOfColor32 * colors.Length;
+            byte[] bytes = new byte[length];
+
+            GCHandle handle = default(GCHandle);
+            try
+            {
+                handle = GCHandle.Alloc(colors, GCHandleType.Pinned);
+                IntPtr ptr = handle.AddrOfPinnedObject();
+                Marshal.Copy(ptr, bytes, 0, length);
+            }
+            finally
+            {
+                if (handle != default(GCHandle))
+                    handle.Free();
+            }
+
+            return bytes;
         }
     }
 }

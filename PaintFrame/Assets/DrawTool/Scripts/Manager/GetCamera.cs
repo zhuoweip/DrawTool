@@ -18,7 +18,7 @@ public class GetCamera : MonoBehaviour
 {
     public LoadType loadType = LoadType.IO;
 
-    public Camera mCamera;                            
+    public Camera mCamera;
     public GameObject reviewMsgUI;                    //留言回顾UI
     public Button returnBtn;                          //留言回顾关闭按钮
     public Transform startPoint;
@@ -84,7 +84,7 @@ public class GetCamera : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.R))
         {
-            RetakePhoto(); 
+            RetakePhoto();
         }
 
         if (Input.GetKeyDown(KeyCode.Q))
@@ -104,7 +104,7 @@ public class GetCamera : MonoBehaviour
 
     [HideInInspector]
     public static int Index;
-    TObjectPool<GameObjData> Tpool = new TObjectPool<GameObjData>(0, GameObjData.CreateObj, GameObjData.ReleaseObj,0, null);
+    TObjectPool<GameObjData> Tpool = new TObjectPool<GameObjData>(0, GameObjData.CreateObj, GameObjData.ReleaseObj, 0, null);
     public Transform picPoolTrans;
 
     void InitData()
@@ -115,7 +115,7 @@ public class GetCamera : MonoBehaviour
             StartCoroutine(LoadWWWAllPicture());
 
         int count = allTex2d.Count < minCount ? minCount : allTex2d.Count;
-        Tpool = new TObjectPool<GameObjData>(count, GameObjData.CreateObj, GameObjData.ReleaseObj, string.Empty, picPoolTrans,0);
+        Tpool = new TObjectPool<GameObjData>(count, GameObjData.CreateObj, GameObjData.ReleaseObj, string.Empty, picPoolTrans, 0);
         for (int i = 0; i < count; i++)
             Tpool.OnActiveGameObject(pQueue);
 
@@ -247,23 +247,25 @@ public class GetCamera : MonoBehaviour
         LoadSinglePic(filename, picName);
         Tpool.OnActiveGameObject(pQueue);
 
-        qr.UpLoad(imagebytes, timestamp,QR_Code.ServerType.CAN);
+        qr.UpLoad(imagebytes, timestamp, QR_Code.ServerType.CAN);
     }
 
     //加载单张本地图片
-    private void LoadSinglePic(string path,string texName)
+    private void LoadSinglePic(string path, string texName)
     {
         FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
         fileStream.Seek(0, SeekOrigin.Begin);
         byte[] bytes = new byte[fileStream.Length];
         fileStream.Read(bytes, 0, (int)fileStream.Length);
-        System.Drawing.Image image = System.Drawing.Image.FromStream(fileStream);
+        //System.Drawing.Image image = System.Drawing.Image.FromStream(fileStream);
+        //int width = image.Width;
+        //int height = image.Height;
         fileStream.Close();
         fileStream.Dispose();
         fileStream = null;
 
-        int width = image.Width;
-        int height = image.Height;
+        int width = w;
+        int height = h;
         Texture2D tmp = new Texture2D(width, height);
         tmp.LoadImage(bytes);
         tmp.name = texName;
@@ -285,7 +287,7 @@ public class GetCamera : MonoBehaviour
         if (!File.Exists(path))
             Directory.CreateDirectory(path);
         DirectoryInfo dir = new DirectoryInfo(path + "/");//初始化一个DirectoryInfo类的对象
-        FileManager.GetAllFiles(dir,maxDay, ht);
+        FileManager.GetAllFiles(dir, maxDay, ht);
         foreach (DictionaryEntry de in ht)
         {
             WWW www = new WWW("file://" + streamingPath + "/" + de.Key);
@@ -365,8 +367,8 @@ public class GetCamera : MonoBehaviour
         photo.gameObject.SetActive(true);
     }
 
-    public float leftEyeCenter_x, leftEyeCenter_y;
-    private float faceWidth, faceHeight;
+    //public float leftEyeCenter_x, leftEyeCenter_y;
+    //private float faceWidth, faceHeight;
 
     private void ShowDetectInfo(JsonParse.TencentFaceDetect de)
     {
@@ -386,17 +388,19 @@ public class GetCamera : MonoBehaviour
     private void ShowDetectInfo(JsonParse.BaiduFaceDectect de)
     {
         JsonParse.BaiduFaceDectect.Result.Face_list face = de.result.face_list[0];
-        leftEyeCenter_x = (float)face.landmark[0].x;
+        float leftEyeCenter_x = (float)face.landmark[0].x;
         //Debug.Log(leftEyeCenter_x);
-        leftEyeCenter_y = (float)face.landmark[0].y;
-        faceWidth = (float)face.location.width;
-        faceHeight = (float)face.location.height;
+        float leftEyeCenter_y = (float)face.landmark[0].y;
+        float faceWidth = (float)face.location.width;
+        float faceHeight = (float)face.location.height;
+        float faceTop = (float)face.location.top;
+        float faceLeft = (float)face.location.left;
 
         var x = leftEyeCenter_x + (faceWidth / 2);
         var y = leftEyeCenter_y + (faceHeight / 2);
 
         //Debug.Log(leftEyeCenter_y);
-        cube.transform.localPosition = GetWorldPos(new Vector2(x,y));
+        cube.transform.localPosition = GetWorldPos(new Vector2(x, y), faceWidth, faceHeight, faceTop, faceLeft);
 
         Debug.Log(face.face_token);
         string genderMsg = face.gender.type == "male" ? "男" : "女";
@@ -408,7 +412,7 @@ public class GetCamera : MonoBehaviour
         SetInfoText(genderMsg, ageMsg, scoreMsg, expressionMsg, glassesMsg, raceMsg);
     }
 
-    private void SetInfoText(string gender,string age,string score,string expression,string glasses,string race)
+    private void SetInfoText(string gender, string age, string score, string expression, string glasses, string race)
     {
         genderText.text = StringUtil.SetStringColor("性别", STRING_COLOR.Red) + StringUtil.SetStringColor(gender, STRING_COLOR.Blue);
         ageText.text = StringUtil.SetStringColor("年龄", STRING_COLOR.Red) + StringUtil.SetStringColor(age, STRING_COLOR.Yellow);
@@ -508,7 +512,7 @@ public class GetCamera : MonoBehaviour
         }
     }
 
-    public static int IndexSort(Texture2D a,Texture2D b)
+    public static int IndexSort(Texture2D a, Texture2D b)
     {
         return string.Compare(b.name, a.name);
     }
@@ -516,6 +520,16 @@ public class GetCamera : MonoBehaviour
     private void OnDestroy()
     {
         camTexture = null;
+    }
+
+    private Vector3 GetWorldPos(Vector2 v2,float texWidth,float texHeight,float texTop,float texLeft)
+    {
+        Vector2 tmp = v2;
+        tmp = new Vector2(tmp.x + texLeft,tmp.y + texTop);
+        tmp = mCamera.ScreenToWorldPoint(tmp);
+        ////归一化
+        //tmp = new Vector2(tmp.x / texWidth, tmp.y / texHeight);
+        return tmp;
     }
 
     private Vector3 GetWorldPos(Vector2 v2)
@@ -545,7 +559,7 @@ public class GetCamera : MonoBehaviour
 
         GUIStyle s = new GUIStyle();
         s.fontSize = 50;
-        s.normal.textColor = Color.white;
+        s.normal.textColor = UnityEngine.Color.white;
         GUI.Label(new Rect(50, 50, 100, 100), mousePositionOnScreen.ToString(), s);
         GUI.Label(new Rect(50, 150, 100, 100), mousePositionInWorld.ToString(), s);
     }
