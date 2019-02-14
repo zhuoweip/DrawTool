@@ -170,7 +170,7 @@ public class GetCamera : MonoBehaviour
         }
     }
 
-    //获取摄像头像素
+    //获取摄像头像素1
     private byte[] GetPhotoPixel(WebCamTexture ca)
     {
         if (ca == null)
@@ -178,6 +178,18 @@ public class GetCamera : MonoBehaviour
         Texture2D texture = new Texture2D(ca.width, ca.height, TextureFormat.RGB24, true);
         texture.SetPixels(ca.GetPixels());
         return texture.EncodeToJPG();
+    }
+
+    //获取摄像头像素2
+    private RenderTexture renderTexture;
+    private Texture GetPhotoTex(WebCamTexture ca)
+    {
+        renderTexture = new RenderTexture(ca.width, ca.height, 24);
+        renderTexture.anisoLevel = 0;
+        renderTexture.filterMode = FilterMode.Bilinear;
+        renderTexture.wrapMode = TextureWrapMode.Repeat;
+        Graphics.Blit(ca, renderTexture);
+        return renderTexture;
     }
 
     //拍照
@@ -340,11 +352,19 @@ public class GetCamera : MonoBehaviour
         }
 
         yield return new WaitForEndOfFrame();
+
+        byte[] bytes = GetPhotoPixel(camTexture);
         //把图片数据转换为byte数组  
         Texture2D texture = new Texture2D(camTexture.width, camTexture.height);
-        byte[] bytes = GetPhotoPixel(camTexture);
         texture.LoadImage(bytes);
         photo.texture = texture;
+
+        //把图片数据转换为byte数组  
+        //photo.texture = GetPhotoTex(camTexture);
+        //renderTexture = null;
+        //Resources.UnloadUnusedAssets();
+        //GC.Collect();
+
         if (isOpenAI && TcpManager.IsOnLine())//在线检测
         {
             result = AIManager.Instance.AIFaceDetect(bytes);
