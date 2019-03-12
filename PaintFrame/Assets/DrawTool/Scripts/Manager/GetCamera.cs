@@ -18,6 +18,7 @@ public class GetCamera : MonoBehaviour
 {
     public LoadType loadType = LoadType.IO;
 
+    public Camera middleCamera;
     public Camera mCamera;
     public GameObject reviewMsgUI;                    //留言回顾UI
     public Button returnBtn;                          //留言回顾关闭按钮
@@ -231,6 +232,29 @@ public class GetCamera : MonoBehaviour
         StartCoroutine(GetCapture());
     }
 
+    //相机截图，可以截取透明贴图
+    public byte[] RtToByte(Camera camera)
+    {
+        RenderTexture rt = RenderTexture.GetTemporary(Screen.width, Screen.height, 24, RenderTextureFormat.ARGB32);
+        camera.targetTexture = rt;
+        camera.Render();
+        RenderTexture.active = camera.targetTexture;
+        Texture2D tex = new Texture2D(rt.width, rt.height, TextureFormat.ARGB32, false);
+
+        //Graphics.CopyTexture(rt, tex);
+        tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        //tex.Compress(true);
+        byte[] bytes = tex.EncodeToPNG();
+        camera.targetTexture = null;
+        Texture2D.DestroyImmediate(tex);
+        tex = null;
+        RenderTexture.active = null;
+        RenderTexture.ReleaseTemporary(rt);
+        Resources.UnloadUnusedAssets();
+        System.GC.Collect();
+        return bytes;
+    }
+
     IEnumerator GetCapture()
     {
         //等待所有的摄像机跟GUI渲染完成
@@ -238,15 +262,21 @@ public class GetCamera : MonoBehaviour
 
         photo.gameObject.SetActive(false);
 
+        /*
         Texture2D tex = new Texture2D(w, h, TextureFormat.RGB24, false);
         //----------------------------------------------------------------------------计算区域----------------------------------------------------
         float vx = (v1.x > v2.x) ? v2.x : v1.x;                                 //取较小的x,y作为起始点
         float vy = (v1.y > v2.y) ? v2.y : v1.y;
         tex.ReadPixels(new Rect(vx, vy, w, h), 0, 0, true);
+        tex.alphaIsTransparency = true;
         //-----------------------------------------------------------------------------------------------------------------------------------------
-        //byte[] imagebytes = tex.EncodeToPNG();//转化为png图
-        byte[] imagebytes = tex.EncodeToJPG(50);//转化为jpg图,可以压缩20倍左右
-        tex.Compress(true);//对屏幕缓存进行压缩    
+        byte[] imagebytes = tex.EncodeToPNG();//转化为png图
+        //byte[] imagebytes = tex.EncodeToJPG(50);//转化为jpg图,可以压缩20倍左右
+        //tex.Compress(true);//对屏幕缓存进行压缩    
+        */
+
+
+        byte[] imagebytes = RtToByte(middleCamera);
 
         string timestamp = QR_Code.GetTimeStamp().ToString();
 
