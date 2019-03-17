@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public class BaiDu
 {
+    #region 人脸识别
     /// <summary>
     /// 人脸检测 detectface
     /// </summary>
@@ -11,7 +12,13 @@ public class BaiDu
     /// <returns></returns>
     public static JObject detectface(byte[] bytes)
     {
-        return Cf.Instance().client.Detect(SCY.Utility.ByteArrToStr64(bytes), "BASE64", Cf.Instance().options);
+        var options = new Dictionary<string, object>()
+        {
+            {"face_field", "age,beauty,expression,faceshape,gender,glasses,landmark,race,quality,facetype"},
+            {"max_face_num", 1},
+            {"face_type", "LIVE"}
+        };
+        return Cf.Instance().faceClient.Detect(SCY.Utility.ByteArrToStr64(bytes), "BASE64", options);
     }
 
     /// <summary>
@@ -21,7 +28,13 @@ public class BaiDu
     /// <returns></returns>
     public static JObject detectface(string url)
     {
-        return Cf.Instance().client.Detect(url, "URL", Cf.Instance().options);
+        var options = new Dictionary<string, object>()
+        {
+            {"face_field", "age,beauty,expression,faceshape,gender,glasses,landmark,race,quality,facetype"},
+            {"max_face_num", 1},
+            {"face_type", "LIVE"}
+        };
+        return Cf.Instance().faceClient.Detect(url, "URL", options);
     }
 
     /// <summary>
@@ -30,7 +43,7 @@ public class BaiDu
     public static void creatgroup()
     {
         var groupId = "group1";
-        var result = Cf.Instance().client.GroupAdd(groupId);
+        var result = Cf.Instance().faceClient.GroupAdd(groupId);
         //Debug.Log(result);
     }
 
@@ -40,7 +53,7 @@ public class BaiDu
     public static void groupdelete()
     {
         var groupId = "group1";
-        var result = Cf.Instance().client.GroupDelete(groupId);
+        var result = Cf.Instance().faceClient.GroupDelete(groupId);
         //Debug.Log(result);
     }
 
@@ -51,7 +64,7 @@ public class BaiDu
     {
         // 可选参数
         var options = new Dictionary<string, object> { { "start", 0 }, { "length", 50 } };
-        var result = Cf.Instance().client.GroupGetlist(options);
+        var result = Cf.Instance().faceClient.GroupGetlist(options);
         //Debug.Log(result);
         return result;
     }
@@ -70,7 +83,7 @@ public class BaiDu
         {"user_info", "user's info"},
         {"quality_control", "NORMAL"},//图片质量控制
         {"liveness_control", "LOW"}};//活体检测控制
-        var result = Cf.Instance().client.UserAdd(image, "BASE64", groupId, userId, options);
+        var result = Cf.Instance().faceClient.UserAdd(image, "BASE64", groupId, userId, options);
         //Debug.Log(result);
     }
 
@@ -89,7 +102,7 @@ public class BaiDu
         {"user_info", "user's info"},
         {"quality_control", "NORMAL"},
         {"liveness_control", "LOW"}};
-        var result = Cf.Instance().client.UserUpdate(image, imageType, groupId, userId,options);
+        var result = Cf.Instance().faceClient.UserUpdate(image, imageType, groupId, userId,options);
         //Debug.Log(result);
     }
 
@@ -102,7 +115,7 @@ public class BaiDu
         var userId = "user1";
         var groupId = "group1";
         var faceToken = token;
-        var result = Cf.Instance().client.FaceDelete(userId, groupId, faceToken);
+        var result = Cf.Instance().faceClient.FaceDelete(userId, groupId, faceToken);
         //Debug.Log(result);
     }
 
@@ -114,7 +127,7 @@ public class BaiDu
     {
         var groupId = "group1";
         var userId = "user1";
-        var result = Cf.Instance().client.UserGet(userId, groupId);
+        var result = Cf.Instance().faceClient.UserGet(userId, groupId);
         //Debug.Log(result);
         return result;
     }
@@ -126,7 +139,7 @@ public class BaiDu
     {
         var groupId = "group1";
         var userId = "user1";
-        var result = Cf.Instance().client.FaceGetlist(userId, groupId);
+        var result = Cf.Instance().faceClient.FaceGetlist(userId, groupId);
         //Debug.Log(result);
         return result;
     }
@@ -138,7 +151,7 @@ public class BaiDu
     {
         var groupId = "group1";
         var userId = "user1";
-        var result = Cf.Instance().client.UserDelete(groupId, userId);
+        var result = Cf.Instance().faceClient.UserDelete(groupId, userId);
         //Debug.Log(result);
     }
 
@@ -169,7 +182,7 @@ public class BaiDu
                 {"liveness_control", "NONE"},
             }
         };
-        var result = Cf.Instance().client.Match(faces);
+        var result = Cf.Instance().faceClient.Match(faces);
         //Debug.Log(result);
         string errorMsg = result["error_msg"].ToString();
         if (errorMsg == "SUCCESS")
@@ -186,4 +199,69 @@ public class BaiDu
             return false;
         }
     }
+
+    #endregion
+
+    #region 文字识别
+    /// <summary>
+    /// 手写检测
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject handwriting(byte[] bytes)
+    {
+        var options = new Dictionary<string, object>()
+        {
+            {"recognize_granularity", "big"}
+        };
+        return Cf.Instance().ocrClient.Handwriting(bytes, options);
+    }
+
+    /// <summary>
+    /// 通用文字识别
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject general_basic(byte[] bytes)
+    {
+        //可选参数options
+        var options = new Dictionary<string, object>{
+            {"detect_language", "false"},
+        };
+        var result = Cf.Instance().ocrClient.GeneralBasic(bytes, options);
+        return result;
+    }
+
+    /// <summary>
+    /// 通用文字识别（高精度版）
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject accurate_basic(byte[] bytes)
+    {
+        //可选参数options
+        var options = new Dictionary<string, object>{
+            {"detect_direction","true"},
+            {"detect_language", "true"},
+        };
+        var result = Cf.Instance().ocrClient.AccurateBasic(bytes, options);
+        return result;
+    }
+
+    /// <summary>
+    /// 通用文字识别（含生僻字版）
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject general_enhanced(byte[] bytes)
+    {
+        //可选参数options
+        //var options = new Dictionary<string, object>{
+        //    {"detect_language", "false"},
+        //};
+        var result = Cf.Instance().ocrClient.AccurateBasic(bytes/*, options*/);
+        return result;
+    }
+
+    #endregion
 }

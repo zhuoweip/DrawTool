@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Baidu.Aip.Face;
+using Baidu.Aip.Ocr;
 
 public class Cf{
 
     public string APIKey { get; set; }
     public string SECRET_KEY { get; set; }
-    public Face client;
-    public Dictionary<string, object> options;
+    public Face faceClient;
+    public Ocr ocrClient;
 
     private static Cf instance = null;
 
@@ -20,7 +21,6 @@ public class Cf{
         {
             instance = new Cf();
         }
-
         return instance;
     }
 
@@ -33,12 +33,11 @@ public class Cf{
     /// <param name="userid"></param>
     public void setAppInfo(string apiKey, string secretKey)
     {
-        this.client = new Face(apiKey, secretKey);
-        this.options = new Dictionary<string, object>()
-        {
-            {"face_field", "age,beauty,expression,faceshape,gender,glasses,landmark,race,quality,facetype"},
-            {"max_face_num", 1},
-            {"face_type", "LIVE"}
-        };
+        this.faceClient = new Face(apiKey, secretKey);
+    }
+
+    public void setOcrAppInfo(string apiKey, string secretKey)
+    {
+        this.ocrClient = new Ocr(apiKey, secretKey);
     }
 }

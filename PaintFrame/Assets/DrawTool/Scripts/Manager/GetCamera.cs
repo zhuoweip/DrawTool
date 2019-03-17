@@ -262,7 +262,7 @@ public class GetCamera : MonoBehaviour
 
         photo.gameObject.SetActive(false);
 
-        /*
+        ///*
         Texture2D tex = new Texture2D(w, h, TextureFormat.RGB24, false);
         //----------------------------------------------------------------------------计算区域----------------------------------------------------
         float vx = (v1.x > v2.x) ? v2.x : v1.x;                                 //取较小的x,y作为起始点
@@ -273,10 +273,12 @@ public class GetCamera : MonoBehaviour
         byte[] imagebytes = tex.EncodeToPNG();//转化为png图
         //byte[] imagebytes = tex.EncodeToJPG(50);//转化为jpg图,可以压缩20倍左右
         //tex.Compress(true);//对屏幕缓存进行压缩    
-        */
+        //*/
 
 
-        byte[] imagebytes = RtToByte(middleCamera);
+        //byte[] imagebytes = /*RtToByte(middleCamera)*/File.ReadAllBytes(Application.streamingAssetsPath + "/timg.jpg");
+        result = AIManager.Instance.AIOcrDetect(imagebytes);
+        Debug.LogError(result);
 
         string timestamp = QR_Code.GetTimeStamp().ToString();
 
@@ -394,6 +396,8 @@ public class GetCamera : MonoBehaviour
         //renderTexture = null;
         //Resources.UnloadUnusedAssets();
         //GC.Collect();
+
+
 
         if (isOpenAI && TcpManager.IsOnLine())//在线检测
         {

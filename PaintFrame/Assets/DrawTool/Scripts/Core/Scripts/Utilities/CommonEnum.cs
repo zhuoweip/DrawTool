@@ -1,4 +1,6 @@
-﻿public enum STRING_COLOR
+﻿using UnityEngine;
+
+public enum STRING_COLOR
 {
     /// <summary>白色</summary>
     White,
@@ -34,4 +36,18 @@ public enum AIType
     BaiDu,
     /// <summary>腾讯SDK</summary>
     Tencent
+}
+
+public enum OcrType
+{
+    [Header("通用识别")]
+    GENERAL_BASIC,
+    [Header("通用文字识别（高精度版）")]
+    ACCURATE_BASIC,
+    [Header("通用文字识别（含生僻字版）")]
+    GENERAL_ENHANCED,
+    [Header("手写识别")]
+    HANDWRITING,
+
+
 }

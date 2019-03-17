@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using GestureRecognizer;
 
+//https://blog.csdn.net/a8725585/article/details/84771290
 public class DrawManager : MonoBehaviour
 {
     public GameObject cursor;
@@ -30,7 +31,7 @@ public class DrawManager : MonoBehaviour
     private void Start()
     {
         currentTool = new Tool();
-        currentTool.width = 1;
+        currentTool.width = 0.5f;
         currentTool.color = color;
         currentTool.textureMode = LineTextureMode.Stretch;
         currentTool.material = material;
