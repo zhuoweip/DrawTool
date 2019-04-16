@@ -48,6 +48,22 @@ public enum OcrType
     GENERAL_ENHANCED,
     [Header("手写识别")]
     HANDWRITING,
+}
 
-
+public enum BodyType
+{
+    [Header("人体关键点识别")]
+    BODYANALYSIS,
+    [Header("人体检测与属性识别")]
+    BODYATTR,
+    [Header("人流量统计")]
+    BODYNUM,
+    [Header("手势识别")]
+    GESTURE,
+    [Header("人像分割")]
+    BODYSEG,
+    [Header("驾驶行为分析")]
+    DRIVERBEHAVIOR,
+    [Header("人流量统计-动态版")]
+    BODYTRACKING,
 }

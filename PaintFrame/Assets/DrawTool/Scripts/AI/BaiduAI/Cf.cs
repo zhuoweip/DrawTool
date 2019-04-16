@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Baidu.Aip.Face;
 using Baidu.Aip.Ocr;
+using Baidu.Aip.BodyAnalysis;
 
 public class Cf{
 
@@ -10,6 +11,7 @@ public class Cf{
     public string SECRET_KEY { get; set; }
     public Face faceClient;
     public Ocr ocrClient;
+    public Body bodyClient;
 
     private static Cf instance = null;
 
@@ -39,5 +41,10 @@ public class Cf{
     public void setOcrAppInfo(string apiKey, string secretKey)
     {
         this.ocrClient = new Ocr(apiKey, secretKey);
+    }
+
+    public void setBodyAnalysisAppInfo(string apiKey, string secretKey)
+    {
+        this.bodyClient = new Body(apiKey, secretKey);
     }
 }

@@ -264,4 +264,76 @@ public class BaiDu
     }
 
     #endregion
+
+    #region 人体分析
+    /// <summary>
+    /// 人体关键点识别
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject bodyAnalysis(byte[] bytes)
+    {
+        return Cf.Instance().bodyClient.BodyAnalysis(bytes);
+    }
+
+    /// <summary>
+    /// 人体检测与属性识别
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject bodyAttr(byte[] bytes)
+    {
+        return Cf.Instance().bodyClient.BodyAttr(bytes);
+    }
+
+    /// <summary>
+    /// 人流量统计
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject bodyNum(byte[] bytes)
+    {
+        return Cf.Instance().bodyClient.BodyNum(bytes);
+    }
+
+    /// <summary>
+    /// 手势识别
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject gesture(byte[] bytes)
+    {
+        return Cf.Instance().bodyClient.Gesture(bytes);
+    }
+
+    /// <summary>
+    /// 人像分割
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject bodySeg(byte[] bytes)
+    {
+        return Cf.Instance().bodyClient.BodySeg(bytes);
+    }
+
+    /// <summary>
+    /// 驾驶行为分析
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject driverBehavior(byte[] bytes)
+    {
+        return Cf.Instance().bodyClient.DriverBehavior(bytes);
+    }
+
+    /// <summary>
+    /// 人流量统计-动态版
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject bodyTracking(byte[] bytes,string dynamic = "true")
+    {
+        return Cf.Instance().bodyClient.BodyTracking(bytes, dynamic);
+    }
+    #endregion
 }
