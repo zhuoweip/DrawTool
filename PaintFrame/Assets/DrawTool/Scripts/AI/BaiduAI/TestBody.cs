@@ -8,14 +8,16 @@ public class TestBody : MonoBehaviour {
 	void Start () {
 		
 	}
-	
+
+    private float time;
 	// Update is called once per frame
 	void Update () {
-        if (Time.frameCount % 10 == 0)//Input.GetKeyDown(KeyCode.A)
+        time += Time.deltaTime;
+        if (time > 2)//Input.GetKeyDown(KeyCode.A)
         {
             byte[] bytes = tex.EncodeToJPG();
             Debug.LogError(AIManager.Instance.AIBodyAnalysisDetector(bytes));
-            
+            time = 0;
         }
 	}
 }
