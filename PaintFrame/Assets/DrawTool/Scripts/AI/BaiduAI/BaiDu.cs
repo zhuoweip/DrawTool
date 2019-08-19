@@ -313,7 +313,17 @@ public class BaiDu
     /// <returns></returns>
     public static JObject bodySeg(byte[] bytes)
     {
-        return Cf.Instance().bodyClient.BodySeg(bytes);
+        var options = new Dictionary<string, object>{
+        {"type", "foreground"}};
+        /*
+        可以通过设置type参数，自主设置返回哪些结果图，避免造成带宽的浪费
+        1）可选值说明：
+        labelmap - 二值图像，需二次处理方能查看分割效果
+        scoremap - 人像前景灰度图
+        foreground - 人像前景抠图，透明背景
+        2）type 参数值可以是可选值的组合，用逗号分隔；如果无此参数默认输出全部3类结果图
+         */
+        return Cf.Instance().bodyClient.BodySeg(bytes, options);
     }
 
     /// <summary>

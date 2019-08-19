@@ -44,6 +44,18 @@ public class JsonParse
         }
     }
 
+    public class BaiDuBodySeg
+    {
+        public static BaiDuBodySeg ParseJsonBodySeg(string json)
+        {
+            return LitJson.JsonMapper.ToObject<BaiDuBodySeg>(json);
+        }
+        public System.Int64 log_id;
+        public string labelmap;
+        public string scoremap;
+        public string foreground;
+    }
+
     public class BaiduFaceDectect
     {
         public static BaiduFaceDectect ParseJsonFaceDetect(string json)
