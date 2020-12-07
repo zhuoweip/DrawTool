@@ -70,6 +70,53 @@ public class BaiDu
     }
 
     /// <summary>
+    /// 获取用户列表
+    /// </summary>
+    /// <returns></returns>
+    public static JObject getusers()
+    {
+        var options = new Dictionary<string, object>{
+        { "start", 0 },
+        { "length", 50 }};
+        var result = Cf.Instance().faceClient.GroupGetusers("group1", options);
+        return result;
+    }
+
+    /// <summary>
+    /// 1:N
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject search(byte[] bytes)
+    {
+        var options = new Dictionary<string, object>
+        {
+            {"max_user_num",3}
+        };
+        var result = Cf.Instance().faceClient.Search(SCY.Utility.ByteArrToStr64(bytes), "BASE64", "group1", options);
+        return result;
+    }
+
+    /// <summary>
+    /// M:N
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static JObject multi_search(byte[] bytes)
+    {
+
+        var options = new Dictionary<string, object>
+        {
+            {"max_face_num",10},
+            {"match_threshold",80},
+            {"max_user_num",20}
+        };
+        var result = Cf.Instance().faceClient.MultiSearch(SCY.Utility.ByteArrToStr64(bytes), "BASE64", "group1", options);
+        //Debug.LogError(result);
+        return result;
+    }
+
+    /// <summary>
     /// 人脸注册
     /// </summary>
     /// <param name="bytes"></param>

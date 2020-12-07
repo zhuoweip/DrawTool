@@ -19,6 +19,98 @@ public class JsonParse
         }
     }
 
+    /// <summary>
+    /// M:N ËÑË÷
+    /// </summary>
+    public class BaiDuMultiSearch
+    {
+        public static BaiDuMultiSearch ParseJsonMultiSearch(string json)
+        {
+            return LitJson.JsonMapper.ToObject<BaiDuMultiSearch>(json);
+        }
+        public int error_code { get; set; }
+        public string error_msg { get; set; }
+        public System.Int64 log_id { get; set; }
+        public int timestamp { get; set; }
+        public int cached { get; set; }
+        public Result result { get; set; }
+        public class Result
+        {
+            public int face_num;
+            public Face_List[] face_list;
+            public class Face_List
+            {
+                public string face_token;
+                public Location location { get; set; }
+                public class Location
+                {
+                    public double left;
+                    public double top;
+                    public double width;
+                    public double height;
+                    public System.Int64 rotation;
+                }
+                public User_List[] user_list { get; set; }
+                public class User_List
+                {
+                    public string group_id;
+                    public string user_id;
+                    public string user_info;
+                    public double score;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 1:N ËÑË÷
+    /// </summary>
+    public class BaiDuSearch
+    {
+        public static BaiDuSearch ParseJsonSearch(string json)
+        {
+            return LitJson.JsonMapper.ToObject<BaiDuSearch>(json);
+        }
+        public int error_code { get; set; }
+        public string error_msg { get; set; }
+        public System.Int64 log_id { get; set; }
+        public int timestamp { get; set; }
+        public int cached { get; set; }
+        public Result result { get; set; }
+
+        public class Result
+        {
+            public string face_token;
+            public User_List[] user_list { get; set; }
+            public class User_List
+            {
+                public string group_id;
+                public string user_id;
+                public string user_info;
+                public double score;
+            }
+        }
+    }
+
+    public class BaiDuGetUserIdList
+    {
+        public static BaiDuGetUserIdList ParseJsonGetUserIdList(string json)
+        {
+            return LitJson.JsonMapper.ToObject<BaiDuGetUserIdList>(json);
+        }
+        public int error_code { get; set; }
+        public string error_msg { get; set; }
+        public System.Int64 log_id { get; set; }
+        public int timestamp { get; set; }
+        public int cached { get; set; }
+        public Result result { get; set; }
+
+        public class Result
+        {
+            public string[] user_id_list;
+        }
+    }
+
     public class BaiduFaceList
     {
         public static BaiduFaceList ParseJsonFaceList(string json)

@@ -67,3 +67,21 @@ public enum BodyType
     [Header("人流量统计-动态版")]
     BODYTRACKING,
 }
+
+public enum FaceGroupDetectType
+{
+    [Header("注册用户组")]
+    FaceCreatGroup,
+    [Header("获取用户组")]
+    GetGroupList,
+    [Header("注册用户")]
+    SignUpNewPerson,
+}
+
+public enum FaceSearchType
+{
+    [Header("1:N")]
+    OneN,
+    [Header("M:N")]
+    MN,
+}

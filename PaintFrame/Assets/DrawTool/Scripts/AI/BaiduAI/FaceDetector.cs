@@ -49,6 +49,19 @@ public class FaceDetector : MonoSingleton<FaceDetector>
         }
     }
 
+    /// <summary>获取用户组</summary>
+    public JObject GetUserList()
+    {
+        try
+        {
+            return BaiDu.getusers();
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
     /// <summary>注册用户组</summary>
     public void FaceCreatGroup()
     {
@@ -101,7 +114,7 @@ public class FaceDetector : MonoSingleton<FaceDetector>
         }
     }
 
-    /// <summary>对比人脸库</summary>
+    /// <summary>1:1 对比人脸库</summary>
     public bool FaceMatch(byte[] bytes)
     {
         JsonParse.BaiduFaceList.Result result = JsonParse.BaiduFaceList.ParseJsonFaceList(GetFaceList().ToString()).result;
@@ -124,6 +137,98 @@ public class FaceDetector : MonoSingleton<FaceDetector>
         {
             throw;
         }
+    }
+
+    public JObject Search(byte[] bytes)
+    {
+        try
+        {
+            return BaiDu.search(bytes);
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 1:N
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public string FaceSearch(byte[] bytes)
+    {
+        if (bytes == null)
+            return null;
+        JsonParse.BaiDuSearch.Result result = JsonParse.BaiDuSearch.ParseJsonSearch(Search(bytes).ToString()).result;
+        for (int i = 0; i < result.user_list.Length; i++)
+        {
+            if (result.user_list[i].score > 80)
+            {
+                return result.user_list[i].user_id;
+            }
+        }
+        return null;
+    }
+
+    public JObject MultiSearch(byte[] bytes)
+    {
+        try
+        {
+            return BaiDu.multi_search(bytes);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e.Message);
+        }
+        return null;
+    }
+
+    string lastUserId;
+    /// <summary>
+    /// M:N 不重复识别一个人
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public string FaceMultiSearch(byte[] bytes)
+    {
+        if (bytes == null)
+            return null;
+        JsonParse.BaiDuMultiSearch baiDuMultiSearch = JsonParse.BaiDuMultiSearch.ParseJsonMultiSearch(MultiSearch(bytes).ToString());
+        if (baiDuMultiSearch.error_code == 0)//不报错进入这一步
+        {
+            JsonParse.BaiDuMultiSearch.Result result = baiDuMultiSearch.result;
+            int faceLength = result.face_list.Length;
+            for (int i = 0; i < result.face_list.Length; i++)
+            {
+                if (result.face_list.Length == 1)
+                {
+                    if (result.face_list[0].user_list[0].score > 80)
+                    {
+                        lastUserId = result.face_list[0].user_list[0].user_id;
+                        return lastUserId;
+                    }
+                }
+                else if (result.face_list.Length > 1)
+                {
+                    if (result.face_list[i].user_list[0].score > 80)
+                    {
+                        if (result.face_list[i].user_list[0].user_id == lastUserId)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            lastUserId = result.face_list[i].user_list[0].user_id;
+                            return lastUserId;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+        return null;
     }
 
     /// <summary>根据检测点重绘图像</summary>

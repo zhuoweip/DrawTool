@@ -23,11 +23,55 @@ public class AIManager : MonoSingleton<AIManager> {
         return result;
     }
 
+    /// <summary>
+    /// 人脸搜索
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <param name="faceSearchType"></param>
+    /// <returns></returns>
+    public string AIFaceSearch(byte[] bytes,FaceSearchType faceSearchType = FaceSearchType.OneN)
+    {
+        string result = string.Empty;
+        switch (faceSearchType)
+        {
+            case FaceSearchType.OneN:
+                result = FaceDetector.Instance.FaceSearch(bytes);
+                break;
+            case FaceSearchType.MN:
+                result = FaceDetector.Instance.FaceMultiSearch(bytes);
+                break;
+            default:
+                break;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// 人脸比对
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public bool FaceMatch(byte[] bytes)
+    {
+        return FaceDetector.Instance.FaceMatch(bytes);
+    }
+
+    /// <summary>
+    /// 人脸融合
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <param name="rImg"></param>
     public void AIFaceMerge(byte[] bytes,UnityEngine.UI.RawImage rImg)
     {
         FacialRecognition.Instance.FaceMerge(bytes, rImg, template);
     }
 
+    /// <summary>
+    /// Ocr识别
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <param name="ocrType"></param>
+    /// <returns></returns>
     public string AIOcrDetect(byte[] bytes, OcrType ocrType = OcrType.GENERAL_BASIC)
     {
         string result = string.Empty;
@@ -55,6 +99,12 @@ public class AIManager : MonoSingleton<AIManager> {
         return result;
     }
 
+    /// <summary>
+    /// 人体分析
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <param name="bodyType"></param>
+    /// <returns></returns>
     public string AIBodyAnalysisDetector(byte[] bytes, BodyType bodyType = BodyType.GESTURE)
     {
         string result = string.Empty;
@@ -90,5 +140,28 @@ public class AIManager : MonoSingleton<AIManager> {
 
         }
         return result;
+    }
+
+    /// <summary>
+    /// 组识别，获取，添加用户
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <param name="type"></param>
+    public void FaceGroupDetect(byte[] bytes, FaceGroupDetectType type)
+    {
+        switch (type)
+        {
+            case FaceGroupDetectType.FaceCreatGroup:
+                FaceDetector.Instance.FaceCreatGroup();
+                break;
+            case FaceGroupDetectType.GetGroupList:
+                FaceDetector.Instance.GetUserList();
+                break;
+            case FaceGroupDetectType.SignUpNewPerson:
+                FaceDetector.Instance.SignUpNewPerson(bytes);
+                break;
+            default:
+                break;
+        }
     }
 }
